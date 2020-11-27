@@ -1,37 +1,40 @@
 ## Setting up a kubernetes cluster
 
-You can use the [editor on GitHub](https://github.com/ktogias/kubernetes-setup/edit/main/README.md) to maintain and preview the content for your website in Markdown files.
+### Create 5 vms and install minimal centos8
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+### Copy your ssh key to each node to be able to ssh with no password
+  ssh-copy-id root@ip1
+  ssh-copy-id root@ip2
+  ssh-copy-id root@ip3
+  ssh-copy-id root@ip4
+  ssh-copy-id root@ip5
 
-### Markdown
+### Install ansible to a pc to manage the cluster nodes
+  yum install ansible
+  vim /etc/ansible/hosts
+  
+  Add thew following:
+    [kubernetes]
+    ip1
+    ip2
+    ip3
+    ip4
+    ip5
+    ....
+        
+### Install python3 on each node as it is requried for ansible
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+Ssh on each node and run
+  dnf install -y python3 && ln -s /usr/bin/python3 /usr/bin/python
+  
+### Update nodes
 
-```markdown
-Syntax highlighted code block
+Run
+  ansible kubernetes -a "dnf upgrade --refresh -y " -u root
+  
+### Reboot nodes
 
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/ktogias/kubernetes-setup/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+Run
+  ansible kubernetes -a "reboot " -u root
+  
+Dont be afraid of ansible error message. It just lost each node after issuing the reboot command.
