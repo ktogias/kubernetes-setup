@@ -1,0 +1,36 @@
+- hosts: kub-all
+  become: yes
+  tasks:
+
+  - name: Upgrade all packages
+    yum:
+      name: '*'
+      state: latest
+
+  - name: Disable SELinux
+    ansible.posix.selinux:
+      state: disabled
+
+  - name: Enable masquerade
+    firewalld:
+      masquerade: yes
+      permanent: true
+      state: enabled
+
+  - name: Set bridged packets to traverse iptables rules
+    copy:
+      dest: /etc/sysctl.d/k8s.conf
+        content: |
+          net.bridge.bridge-nf-call-ip6tables = 1
+          net.bridge.bridge-nf-call-iptables = 1
+
+  - name: Disable swap permanently
+    replace:
+      path: /etc/fstab
+      regexp: '^(\s*)([^#\n]+\s+)(\w+\s+)swap(\s+.*)$'
+      replace: '#\1\2\3swap\4'
+      backup: yes
+
+
+#- name: Reboot the machine
+#  reboot:
