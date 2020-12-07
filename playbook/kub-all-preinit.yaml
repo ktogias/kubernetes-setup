@@ -1,5 +1,4 @@
 ---
-# ansible-galaxy collection install community.network
 - name: Pre-init setup of kubernetes cluster nodes
   hosts: kuball
   become: true
