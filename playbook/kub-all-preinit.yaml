@@ -91,5 +91,5 @@
       msg: 
       - "{{ public_ip }}"
       - "{{ internal_ip }}"
-      - "{{ machine_id_already_regenerated }}"
+      - "{{ machine_id_already_regenerated.stat.exists }}"
       
