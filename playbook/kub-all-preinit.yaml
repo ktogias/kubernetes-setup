@@ -1,0 +1,95 @@
+---
+# ansible-galaxy collection install community.network
+- name: Pre-init setup of kubernetes cluster nodes
+  hosts: kuball
+  become: true
+
+  vars:
+    public_interface: "enp1s0"
+    public_ip: "192.168.0.{{ groups['kuball'].index(inventory_hostname)+81 }}/24"
+    gateway: "192.168.0.1"
+    dns: "192.168.0.1"
+    public_zone: "public"
+
+    internal_interface: "enp2s0"
+    internal_ip: "172.16.1.{{ groups['kuball'].index(inventory_hostname)+81 }}/24"
+    internal_zone: "internal"
+
+  tasks: 
+
+  - name: Check if have already regenerated machine id 
+    stat: 
+      path: /etc/machine-id-already-regenerated
+    register: machine_id_already_regenerated
+
+  - name: Remove machine id 
+    file:
+      path: /etc/machine-id 
+      state: absent
+    when: machine_id_already_regenerated.stat.exists == false
+  
+  - name: Regenerate new machine id
+    command: systemd-machine-id-setup
+    when: machine_id_already_regenerated.stat.exists == false
+
+  - name: Create /etc/machine-id-already-regenerated
+    file: 
+      path: /etc/machine-id-already-regenerated
+      state: touch
+    when: machine_id_already_regenerated.stat.exists == false
+
+
+  - name: Ensure public interface has correct static ip4 address
+    nmcli: 
+      conn_name: "{{ public_interface }}"
+      ifname: "{{ public_interface }}"
+      type: ethernet
+      ip4: "{{ public_ip }}"
+      gw4: "{{ gateway }}"
+      dns4: "{{ dns }}"
+      ip6: ""
+      autoconnect: true
+      state: present
+
+  - name: Ensure internal interface has correct static ip4 address
+    nmcli: 
+      conn_name: "{{ internal_interface }}"
+      ifname: "{{ internal_interface }}"
+      type: ethernet
+      ip4: "{{ internal_ip }}"
+      ip6: ""
+      autoconnect: true
+      state: present
+
+  - name: Ensure bootproto is set to none for public interface
+    lineinfile:
+        path: "/etc/sysconfig/network-scripts/ifcfg-{{ public_interface }}"
+        regexp: '^BOOTPROTO='
+        line: 'BOOTPROTO=none'
+        backup: yes
+
+  - name: Ensure bootproto is set to none for internal interface
+    lineinfile:
+        path: "/etc/sysconfig/network-scripts/ifcfg-{{ internal_interface }}"
+        regexp: '^BOOTPROTO='
+        line: 'BOOTPROTO=none'
+        backup: yes
+
+  - name: Ensure public zone is set for public interface
+    lineinfile:
+        path: "/etc/sysconfig/network-scripts/ifcfg-{{ public_interface }}"
+        line: "ZONE={{ public_zone }}"
+        create: yes
+
+  - name: Ensure internal zone is set for internal interface
+    lineinfile:
+        path: "/etc/sysconfig/network-scripts/ifcfg-{{ internal_interface }}"
+        line: "ZONE={{ internal_zone }}"
+        create: yes
+  
+  - debug: 
+      msg: 
+      - "{{ public_ip }}"
+      - "{{ internal_ip }}"
+      - "{{ machine_id_already_regenerated }}"
+      
