@@ -1,0 +1,20 @@
+[kuball]
+vkub1 ansible_host=172.16.1.81 ansible_user=root
+vkub2 ansible_host=172.16.1.82 ansible_user=root
+vkub3 ansible_host=172.16.1.83 ansible_user=root
+vkub4 ansible_host=172.16.1.84 ansible_user=root
+vkub5 ansible_host=172.16.1.85 ansible_user=root
+
+[kubmasters]
+vkub1
+
+[kubworkers]
+vkub2
+vkub3
+vkub4
+vkub5
+
+[kubpublic]
+vkub1
+vkub2
+vkub3
