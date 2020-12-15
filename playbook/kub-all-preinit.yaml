@@ -23,6 +23,14 @@
   - debug: 
       msg: 
       - "{{ machine_id_already_regenerated.stat.exists }}"
+      
+- name: Set hostnames
+  hosts: kuball
+  become: true
+  tasks:
+  - name: Ensure host name is set to the inventory hostname
+    hostname:
+      name: "{{ inventory_hostname }}"
   
 - name: Setup internal network of kubernetes cluster nodes
   hosts: kuball

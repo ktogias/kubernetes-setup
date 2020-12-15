@@ -1,30 +1,53 @@
-- hosts: kub-all
+---
+#ansible-galaxy collection install ansible.posix
+#ansible-galaxy collection install community.general
+
+- name: Prepare all nodes for kubernetes
+  hosts: kuball
   become: yes
   tasks:
 
-  - name: Upgrade all packages
+  - name: Ensure all packages are at latest version
     yum:
       name: '*'
       state: latest
 
-  - name: Disable SELinux
+  - name: Ensure SELinux is disabled
     ansible.posix.selinux:
       state: disabled
+      
+  - name: Ensure br_netfilter module is loaded
+    community.general.modprobe:
+        name: br_netfilter
+        state: present
 
-  - name: Enable masquerade
+  - name: Ensure masquerade is enabled for internal zone 
     firewalld:
+      zone: internal
       masquerade: yes
       permanent: true
       state: enabled
+          
+  - name: Ensure net.bridge.bridge-nf-call-iptables is enabled
+    sysctl:
+        name: net.bridge.bridge-nf-call-iptables
+        value: '1'
+        sysctl_set: yes
+        state: present
+        reload: yes
+        
+  - name: Ensure net.bridge.bridge-nf-call-ip6tables is enabled
+    sysctl:
+        name: net.bridge.bridge-nf-call-ip6tables
+        value: '1'
+        sysctl_set: yes
+        state: present
+        reload: yes
+        
+  - name: Disable swap for current session
+    command: swapoff -a
 
-  - name: Set bridged packets to traverse iptables rules
-    copy:
-      dest: /etc/sysctl.d/k8s.conf
-        content: |
-          net.bridge.bridge-nf-call-ip6tables = 1
-          net.bridge.bridge-nf-call-iptables = 1
-
-  - name: Disable swap permanently
+  - name: Ensure swap is permanently disabled
     replace:
       path: /etc/fstab
       regexp: '^(\s*)([^#\n]+\s+)(\w+\s+)swap(\s+.*)$'
