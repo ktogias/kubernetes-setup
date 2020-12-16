@@ -1,12 +1,13 @@
 ---
 #ansible-galaxy collection install ansible.posix
 #ansible-galaxy collection install community.general
-
 - name: Prepare all nodes for kubernetes
   hosts: kuball
   become: yes
   tasks:
-
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
   - name: Ensure all packages are at latest version
     yum:
       name: '*'
@@ -15,23 +16,19 @@
         - kubeadm 
         - kubectl
       state: latest
-
   - name: Ensure SELinux is disabled
     ansible.posix.selinux:
       state: disabled
-      
   - name: Ensure br_netfilter module is loaded
     community.general.modprobe:
         name: br_netfilter
         state: present
-
   - name: Ensure masquerade is enabled for internal zone 
     firewalld:
-      zone: internal
+      zone: "{{internal_zone}}"
       masquerade: yes
       permanent: true
       state: enabled
-          
   - name: Ensure net.bridge.bridge-nf-call-iptables is enabled
     sysctl:
         name: net.bridge.bridge-nf-call-iptables
@@ -39,7 +36,6 @@
         sysctl_set: yes
         state: present
         reload: yes
-        
   - name: Ensure net.bridge.bridge-nf-call-ip6tables is enabled
     sysctl:
         name: net.bridge.bridge-nf-call-ip6tables
@@ -47,39 +43,31 @@
         sysctl_set: yes
         state: present
         reload: yes
-        
   - name: Disable swap for current session
     command: swapoff -a
-
   - name: Ensure swap is permanently disabled
     replace:
       path: /etc/fstab
       regexp: '^(\s*)([^#\n]+\s+)(\w+\s+)swap(\s+.*)$'
       replace: '#\1\2\3swap\4'
       backup: yes
-
-
   - name: Ensure docker repository is enabled
     get_url:
       url: https://download.docker.com/linux/centos/docker-ce.repo
       dest: /etc/yum.repos.d/docker-ce.repo
-   
   - name: Ensure containerd.io latest version is installed
     yum:
       name: 'containerd.io'
       state: latest
-
   - name: Ensure docker-ce latest version is installed
     yum:
       name: 'docker-ce'
       state: latest
-
   - name: Ensure docker service is enabled and started
     service:
       name: docker
       enabled: yes
       state: started
-
   - name: Ensure kubernetes repository is enabled
     copy:
       content: |
@@ -91,17 +79,13 @@
         repo_gpgcheck=1
         gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
       dest: /etc/yum.repos.d/kubernetes.repo
-
   - name: Ensure kubeadm latest version is installed
     yum:
       name: kubeadm
       state: latest
-
   - name: Ensure kubelet service is enabled and started
     service:
       name: kubelet
       enabled: yes
       state: started
 
-#- name: Reboot the machine
-#  reboot:

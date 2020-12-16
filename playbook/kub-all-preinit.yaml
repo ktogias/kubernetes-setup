@@ -29,9 +29,12 @@
   hosts: kuball
   become: true
   tasks:
-  - name: Ensure timezone is set to Europe/Athens
+  - name: Include vars from vars.yaml 
+    include_vars:
+      file: vars.yaml
+  - name: "Ensure timezone is set to {{ timezone }}"
     community.general.timezone:
-      name: Europe/Athens
+      name: "{{ timezone }}"
   - name: Ensure chrony is present
     yum:
       name: chrony
@@ -53,29 +56,33 @@
 - name: Setup internal network of kubernetes cluster nodes
   hosts: kuball
   become: true
-  vars:
-    internal_interface: "enp2s0"
-    internal_ip: "172.16.1.{{ groups['kuball'].index(inventory_hostname)+81 }}/24"
-    internal_zone: "internal"
-    wrong_internal_ifcfg_name: "Ethernet_connection_1"
   tasks: 
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
   - name: Stat network script with wrong internal ifcfg name
     stat:
         path: "/etc/sysconfig/network-scripts/ifcfg-{{ wrong_internal_ifcfg_name }}"
     register: internal_ifcfg_has_wrong_name
+    when: wrong_internal_ifcfg_name is defined
   - name: Ensure network script with wrong internal ifcfg name is fixed to match internal inteface name
     command: "mv etc/sysconfig/network-scripts/ifcfg-{{ wrong_internal_ifcfg_name }} /etc/sysconfig/network-scripts/ifcfg-{{ internal_interface }}"
-    when: internal_ifcfg_has_wrong_name == true
+    when:
+      - wrong_internal_ifcfg_name is defined 
+      - internal_ifcfg_has_wrong_name == true
   - name: Ensure network script with wrong internal ifcfg name is not present
     file:
       path: "/etc/sysconfig/network-scripts/ifcfg-{{ wrong_internal_ifcfg_name }}"
       state: absent
-  - name: Ensure internal interface has correct static ip4 address
+    when: wrong_internal_ifcfg_name is defined
+  - name: Ensure internal interface has correct static network config
     nmcli: 
       conn_name: "{{ internal_interface }}"
       ifname: "{{ internal_interface }}"
       type: ethernet
       ip4: "{{ internal_ip }}"
+      gw4: "{{ internal_gateway if internal_gateway is defined else omit}}"
+      dns4: "{{ internal_dns if internal_dns is defined else omit}}"
       ip6: ""
       autoconnect: true
       state: present
@@ -97,22 +104,15 @@
 - name: Setup public network of kubernetes cluster nodes
   hosts: kubpublic
   become: true
-  vars:
-    public_interface: "enp1s0"
-    public_ip: "192.168.0.{{ groups['kubpublic'].index(inventory_hostname)+81 }}/24"
-    gateway: "192.168.0.1"
-    dns: 
-        - "192.168.0.1"
-    public_zone: "public"
   tasks: 
-  - name: Ensure public interface has correct static ip4 address
+  - name: Ensure public interface has correct static network config
     nmcli: 
       conn_name: "{{ public_interface }}"
       ifname: "{{ public_interface }}"
       type: ethernet
       ip4: "{{ public_ip }}"
-      gw4: "{{ gateway }}"
-      dns4: "{{ dns }}"
+      gw4: "{{ public_gateway }}"
+      dns4: "{{ public_dns }}"
       ip6: ""
       autoconnect: true
       state: present

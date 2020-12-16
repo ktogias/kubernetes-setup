@@ -1,0 +1,21 @@
+timezone: Europe/Athens
+internal_interface: enp2s0
+internal_ip: 172.16.1.{{ groups['kuball'].index(inventory_hostname)+81 }}/24
+  #internal_gateway: 
+  #internal_dns:
+internal_zone: internal
+  #wrong_internal_ifcfg_name:
+public_interface: enp1s0
+public_ip: 192.168.0.{{ groups['kubpublic'].index(inventory_hostname)+81 }}/24
+public_gateway: 192.168.0.1
+public_dns: 
+  - 192.168.0.1
+public_zone: public
+master_internal_open_ports:
+  - 6443/tcp
+  - 2379-2380/tcp
+  - 10250/tcp
+  - 10251/tcp
+  - 10252/tcp
+  - 10255/tcp
+

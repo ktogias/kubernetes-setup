@@ -2,22 +2,17 @@
 - name: Setup kuernetes masters
   hosts: kubmasters
   become: true
-  vars: 
-    open_ports:
-    - 6443/tcp
-    - 2379-2380/tcp
-    - 10250/tcp
-    - 10251/tcp
-    - 10252/tcp
-    - 10255/tcp
-  tasks: 
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml 
   - name: Ensure that required ports are open on internal zone
     ansible.posix.firewalld:
-      zone: internal
+      zone: "{{ internal_zone  }}"
       port: "{{ item }}"
       permanent: yes
       state: enabled
-    loop: "{{ open_ports  }}"
+    loop: "{{ master_internal_open_ports  }}"
   - name: Register kubernetes admin.conf file existence
     stat:
       path: /etc/kubernetes/admin.conf
