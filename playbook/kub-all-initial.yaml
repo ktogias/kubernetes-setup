@@ -55,5 +55,15 @@
       backup: yes
 
 
+  - name: Ensure docker repository is enabled
+    get_url:
+      url: https://download.docker.com/linux/centos/docker-ce.repo
+      dest: /etc/yum.repos.d/docker-ce.repo
+   
+  - name: Ensure containerd.io latest version is installed
+    yum:
+      name: 'containerd.io'
+      state: latest
+
 #- name: Reboot the machine
 #  reboot:
