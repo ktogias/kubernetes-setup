@@ -23,7 +23,24 @@
   - debug: 
       msg: 
       - "{{ machine_id_already_regenerated.stat.exists }}"
-      
+
+- name: Setup ntp time sync
+  hosts: kuball
+  become: true
+  tasks:
+  - name: Ensure timezone is set to Europe/Athens
+    community.general.timezone:
+      name: Europe/Athens
+  - name: Ensure chrony is present
+    yum:
+      name: chrony
+      state: present
+  - name: Ensure chrony service is enabled
+    service:
+      name: chronyd
+      enabled: yes
+      state: started
+
 - name: Set hostnames
   hosts: kuball
   become: true
@@ -36,10 +53,22 @@
   hosts: kuball
   become: true
   vars:
-    internal_interface: "enp2s0"
+    internal_interface: "ens224"
     internal_ip: "172.16.1.{{ groups['kuball'].index(inventory_hostname)+81 }}/24"
     internal_zone: "internal"
+    wrong_internal_ifcfg_name: "Ethernet_connection_1"
   tasks: 
+  - name: Stat network script with wrong internal ifcfg name
+    stat:
+        path: "/etc/sysconfig/network-scripts/ifcfg-{{ wrong_internal_ifcfg_name }}"
+    register: internal_ifcfg_has_wrong_name
+  - name: Ensure network script with wrong internal ifcfg name is fixed to match internal inteface name
+    command: "mv etc/sysconfig/network-scripts/ifcfg-{{ wrong_internal_ifcfg_name }} /etc/sysconfig/network-scripts/ifcfg-{{ internal_interface }}"
+    when: internal_ifcfg_has_wrong_name == true
+  - name: Ensure network script with wrong internal ifcfg name is not present
+    file:
+      path: "/etc/sysconfig/network-scripts/ifcfg-{{ wrong_internal_ifcfg_name }}"
+      state: absent
   - name: Ensure internal interface has correct static ip4 address
     nmcli: 
       conn_name: "{{ internal_interface }}"
@@ -68,10 +97,11 @@
   hosts: kubpublic
   become: true
   vars:
-    public_interface: "enp1s0"
-    public_ip: "192.168.0.{{ groups['kuball'].index(inventory_hostname)+81 }}/24"
+    public_interface: "ens192"
+    public_ip: "192.168.0.{{ groups['kubpublic'].index(inventory_hostname)+81 }}/24"
     gateway: "192.168.0.1"
-    dns: "192.168.0.1"
+    dns: 
+        - "192.168.0.1"
     public_zone: "public"
   tasks: 
   - name: Ensure public interface has correct static ip4 address
