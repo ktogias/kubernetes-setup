@@ -53,7 +53,7 @@
   hosts: kuball
   become: true
   vars:
-    internal_interface: "ens224"
+    internal_interface: "enp2s0"
     internal_ip: "172.16.1.{{ groups['kuball'].index(inventory_hostname)+81 }}/24"
     internal_zone: "internal"
     wrong_internal_ifcfg_name: "Ethernet_connection_1"
@@ -97,7 +97,7 @@
   hosts: kubpublic
   become: true
   vars:
-    public_interface: "ens192"
+    public_interface: "enp1s0"
     public_ip: "192.168.0.{{ groups['kubpublic'].index(inventory_hostname)+81 }}/24"
     gateway: "192.168.0.1"
     dns: 
