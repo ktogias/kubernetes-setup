@@ -1,0 +1,17 @@
+---
+- name: Test internal networking is properly setup
+  hosts: kuball
+  vars: 
+    ips: "{% set IP_ARR=[] %}{% for host in groups['kuball'] %}{% if IP_ARR.insert(loop.index,hostvars[host]['ansible_host']) %}{% endif %}{% endfor %}{{IP_ARR}}" 
+
+    times: 10
+  tasks:
+  - debug:
+      msg: "{{ ips }}"
+  - name: "Ping kuball internal ips"
+    command:
+      argv:
+        - ping
+        - "-c {{ times }}"
+        - "{{ item }}"
+    loop: "{{ips}}"
