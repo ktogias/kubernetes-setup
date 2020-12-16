@@ -1,0 +1,26 @@
+---
+- name: Setup kuernetes masters
+  hosts: kubmasters
+  become: true
+  vars: 
+    open_ports:
+    - 6443/tcp
+    - 2379-2380/tcp
+    - 10250/tcp
+    - 10251/tcp
+    - 10252/tcp
+    - 10255/tcp
+  tasks: 
+  - name: Ensure that required ports are open on internal zone
+    ansible.posix.firewalld:
+      zone: internal
+      port: "{{ item }}"
+      permanent: yes
+      state: enabled
+    loop: "{{ open_ports  }}"
+  - name: Register kubernetes admin.conf file existence
+    stat:
+      path: /etc/kubernetes/admin.conf
+    register: k8s_conf_exists
+#  - name: Run kubadm init when kubernetes admin.conf file does not exist
+
