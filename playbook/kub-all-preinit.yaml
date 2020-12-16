@@ -1,4 +1,5 @@
 ---
+# ansible-galaxy collection install community.general
 - name: Regenerate machine id
   hosts: kuball
   become: true
