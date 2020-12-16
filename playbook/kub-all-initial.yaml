@@ -10,6 +10,10 @@
   - name: Ensure all packages are at latest version
     yum:
       name: '*'
+      exclude: 
+        - kubelet 
+        - kubeadm 
+        - kubectl
       state: latest
 
   - name: Ensure SELinux is disabled
@@ -64,6 +68,40 @@
     yum:
       name: 'containerd.io'
       state: latest
+
+  - name: Ensure docker-ce latest version is installed
+    yum:
+      name: 'docker-ce'
+      state: latest
+
+  - name: Ensure docker service is enabled and started
+    service:
+      name: docker
+      enabled: yes
+      state: started
+
+  - name: Ensure kubernetes repository is enabled
+    copy:
+      content: |
+        [kubernetes]
+        name=Kubernetes
+        baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+        enabled=1
+        gpgcheck=1
+        repo_gpgcheck=1
+        gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+      dest: /etc/yum.repos.d/kubernetes.repo
+
+  - name: Ensure kubeadm latest version is installed
+    yum:
+      name: kubeadm
+      state: latest
+
+  - name: Ensure kubelet service is enabled and started
+    service:
+      name: kubelet
+      enabled: yes
+      state: started
 
 #- name: Reboot the machine
 #  reboot:
