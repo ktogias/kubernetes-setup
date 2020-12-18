@@ -5,6 +5,9 @@ vkub3 ansible_host=172.16.1.83 ansible_user=root
 vkub4 ansible_host=172.16.1.84 ansible_user=root
 vkub5 ansible_host=172.16.1.85 ansible_user=root
 
+[initkubmaster]
+vkub1
+
 [kubmasters]
 vkub1
 

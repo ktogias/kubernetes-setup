@@ -1,5 +1,5 @@
 ---
-- name: Setup kuernetes masters
+- name: Setup kubernetes masters
   hosts: kubmasters
   become: true
   tasks:
@@ -13,9 +13,13 @@
       permanent: yes
       state: enabled
     loop: "{{ master_internal_open_ports  }}"
-  - name: Register kubernetes admin.conf file existence
-    stat:
-      path: /etc/kubernetes/admin.conf
-    register: k8s_conf_exists
-#  - name: Run kubadm init when kubernetes admin.conf file does not exist
-
+  - name: Ensure docker service is enabled and started
+    service:
+      name: docker
+      enabled: yes
+      state: started
+  - name: Ensure kubelet service is enabled and started
+    service:
+      name: kubelet
+      enabled: yes
+      state: started
