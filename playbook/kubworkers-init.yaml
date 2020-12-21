@@ -1,6 +1,6 @@
 ---
-- name: Setup kubernetes masters
-  hosts: kubmasters
+- name: Setup kubernetes workers
+  hosts: kubworkers
   become: true
   tasks:
   - name: Include vars from vars.yaml
@@ -13,7 +13,7 @@
       permanent: yes
       immediate: yes
       state: enabled
-    loop: "{{ master_internal_open_ports  }}"
+    loop: "{{ worker_internal_open_ports  }}"
   - name: Ensure that calico required ports are open on internal zone
     ansible.posix.firewalld:
       zone: "{{ internal_zone  }}"

@@ -4,6 +4,7 @@
   become: true
   vars: 
     api_server_advertise_address: "{{ hostvars[inventory_hostname]['ansible_'+internal_interface]['ipv4']['address'] }}"
+    node_ip: "{{ api_server_advertise_address }}"
   tasks:
   - name: Include vars from vars.yaml
     include_vars:
@@ -36,6 +37,20 @@
         - --apiserver-advertise-address={{ api_server_advertise_address }}
     when: not k8s_conf_exists.stat.exists
     register: kubadm_init_output
+  - name: "Set node ip to  {{ node_ip }}"
+    lineinfile:
+      path: "/etc/sysconfig/kubelet"
+      regexp: '^KUBELET_EXTRA_ARGS='
+      line: 'KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}'
+      backup: yes
+  - name: Ensure kubelet service is restarted
+    service:
+      name: kubelet
+      enabled: yes
+      state: restarted
+  - name: Debug echo node ip
+    debug:
+      msg: "{{ node_ip }}"
   - name: "Ensure {{ kubectl_user }} .kube dir exists"
     file:
       path: "~{{ kubectl_user }}/.kube"
@@ -55,7 +70,66 @@
     until: k8s_conf_exists.stat.exists == true
     retries: 10
     delay: 10
+  - name: Set worker nodes join command fact
+    set_fact: 
+      CLUSTER_JOIN_COMMAND: "{{ kubadm_init_output.stdout_lines[-2] | regex_replace('\\\\','') }}  {{ kubadm_init_output.stdout_lines[-1] }}"
   - name: Display worker nodes join command
     debug:
-      msg: "{{ kubadm_init_output.stdout_lines[-2] }}  {{ kubadm_init_output.stdout_lines[-1] }}"
+      msg: "{{ hostvars[inventory_hostname]['CLUSTER_JOIN_COMMAND'] }}"
+  - name: Copy Calico manifest
+    copy:
+      src: ../manifests/calico/calico.yaml
+      dest: "/tmp/calico.yaml"
+  - name: Deploy Calico CNI
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl apply -f /tmp/calico.yaml"
+    register: calico_deployment_result
+  - name: Debug display callico deployment result
+    debug:
+      msg: "{{ calico_deployment_result }}"
+
+- name: Join workers
+  hosts: kubworkers
+  become: true
+  vars:
+    CLUSTER_JOIN_COMMAND: "{{ hostvars[groups['initkubmaster'][0]]['CLUSTER_JOIN_COMMAND'] }}"
+    node_ip: "{{ hostvars[inventory_hostname]['ansible_'+internal_interface]['ipv4']['address'] }}"
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Ensure docker service is enabled and started
+    service:
+      name: docker
+      enabled: yes
+      state: started
+  - name: Ensure kubelet service is enabled and started
+    service:
+      name: kubelet
+      enabled: yes
+      state: started
+  - name: Display cluster join command
+    debug:
+      msg: "{{ CLUSTER_JOIN_COMMAND }}"
+  - name: Execute cluster join command
+    command: "{{ CLUSTER_JOIN_COMMAND }}"
+    register: join_command_result
+  - name: Debug command output
+    debug:
+      msg: "{{ join_command_result }}"
+  - name: "Set node ip to  {{ node_ip }}"
+    lineinfile:
+      path: "/etc/sysconfig/kubelet"
+      regexp: '^KUBELET_EXTRA_ARGS='
+      line: 'KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}'
+      backup: yes
+  - name: Ensure kubelet service is restarted
+    service:
+      name: kubelet
+      enabled: yes
+      state: restarted
+  - name: Debug echo node ip
+    debug:
+      msg: "{{ node_ip }}"
 
