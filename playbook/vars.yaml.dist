@@ -18,4 +18,17 @@ master_internal_open_ports:
   - 10251/tcp
   - 10252/tcp
   - 10255/tcp
-
+worker_internal_open_ports:
+  - 6783/tcp
+  - 10250/tcp
+  - 10255/tcp
+  - 30000-32767/tcp
+kubectl_user: ktogias
+calico_open_ports:
+  - 179/tcp
+  - 4789/udp
+  - 5473/tcp
+  - 4789/udp
+  - 443/tcp
+  - 6443/tcp
+  - 2379/tcp
