@@ -1,0 +1,20 @@
+---
+- name: Deploy Hello Kuberentes App
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Copy Hello Kuberentes manifest
+    copy:
+      src: ../manifests/hello-kubernetes/hello-kubernetes.yaml
+      dest: "/tmp/hello-kubernetes.yaml"
+  - name: Deploy Hello Kuberentes manifest
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl apply -f /tmp/hello-kubernetes.yaml"
+    register: hello_kuberentes_deployment_result
+  - name: Show Hello Kubernetes deployment result
+    debug:
+      msg: "{{ hello_kuberentes_deployment_result }}"

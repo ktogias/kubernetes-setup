@@ -1,4 +1,37 @@
 ---
+- name: Prepare hosts for Calico CNI
+  hosts: kuball
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Ensure NetworkManager unmanaged devices configuration file has the proper content
+    copy:
+      content: |
+        [keyfile]
+        unmanaged-devices=interface-name:cali*;interface-name:tunl*;interface-name:vxlan.calico
+      dest: /etc/NetworkManager/conf.d/calico.conf
+  - name: Restart NetworkManager
+    service:
+      name: NetworkManager
+      state: restarted
+  - name: Ensure net.netfilter.nf_conntrack_max is increased
+    sysctl:
+        name: net.netfilter.nf_conntrack_max
+        value: '1000000'
+        sysctl_set: yes
+        state: present
+        reload: yes
+  - name: Ensure that calico required ports are open on internal zone
+    ansible.posix.firewalld:
+      zone: "{{ internal_zone  }}"
+      port: "{{ item }}"
+      permanent: yes
+      immediate: yes
+      state: enabled
+    loop: "{{ calico_open_ports }}"
+      
 - name: Deploy Calico CNI
   hosts: initkubmaster
   become: true
@@ -8,7 +41,7 @@
       file: vars.yaml
   - name: Copy Calico manifest
     copy:
-      src: ../manifests/calico/calico.yaml
+      src: ../manifests/calico/calico-nft.yaml
       dest: "/tmp/calico.yaml"
   - name: Deploy Calico manifest
     become: true

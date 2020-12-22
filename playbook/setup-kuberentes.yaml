@@ -104,14 +104,6 @@
       immediate: yes
       state: enabled
     loop: "{{ master_internal_open_ports  }}"
-  - name: Ensure that calico required ports are open on internal zone
-    ansible.posix.firewalld:
-      zone: "{{ internal_zone  }}"
-      port: "{{ item }}"
-      permanent: yes
-      immediate: yes
-      state: enabled
-    loop: "{{ calico_open_ports }}"
     
 - name: Open network ports on kubernetes workers
   hosts: kubworkers
@@ -128,12 +120,4 @@
       immediate: yes
       state: enabled
     loop: "{{ worker_internal_open_ports  }}"
-  - name: Ensure that calico required ports are open on internal zone
-    ansible.posix.firewalld:
-      zone: "{{ internal_zone  }}"
-      port: "{{ item }}"
-      permanent: yes
-      immediate: yes
-      state: enabled
-    loop: "{{ calico_open_ports }}"
   

@@ -1,0 +1,82 @@
+---
+- name: Prepare hosts for Istio
+  tags: 
+    - prepare
+  hosts: kuball
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Ensure that istio required ports are open on internal zone
+    ansible.posix.firewalld:
+      zone: "{{ internal_zone  }}"
+      port: "{{ item }}"
+      permanent: yes
+      immediate: yes
+      state: enabled
+    loop: "{{ istio_open_ports }}"
+    
+- name: Istall istioctl
+  tags: 
+    - prepare
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Check if istioctl is already installed
+    stat:
+      path: "~{{ kubectl_user }}/.istioctl/bin/istioctl"
+    register: stat_istioctl
+  - name: Install istioctl
+    become: true
+    become_user: "{{ kubectl_user }}"
+    shell: "curl -sL https://istio.io/downloadIstioctl | sh -"
+    when: not stat_istioctl.stat.exists
+  - name: Ensure that istioctl is added to user path
+    become: true
+    become_user: "{{ kubectl_user }}"
+    lineinfile:
+        path: "~{{ kubectl_user }}/.bashrc"
+        line: export PATH=$PATH:$HOME/.istioctl/bin
+        
+- name: Deploy istio
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Register existence of istio operator deployment
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: kubectl -n istio-operator get deployment istio-operator
+    register: istio_operator_deployments
+  - debug:
+      var: istio_operator_deployments.stdout_lines | length
+  - name: Deploy istio operator
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "~{{ kubectl_user }}/.istioctl/bin/istioctl operator init"
+    when: istio_operator_deployments.stdout_lines | length == 0
+  - name: Register existence of istio-system namespace
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: kubectl get namespace istio-system
+    register: istio_system_namespace_register
+  - name: Create istio-system namespace
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: kubectl create ns istio-system
+    when: istio_system_namespace_register.stdout_lines | length == 0
+  - name: Copy istio default configuration profile manifest
+    copy:
+      src: ../manifests/istio/istio-operator-default-configuaration-profile.yaml
+      dest: "/tmp/istio-operator-default-configuaration-profile.yaml"
+  - name: Install istio default configuration profile
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: kubectl apply -f /tmp/istio-operator-default-configuaration-profile.yaml
+ 
