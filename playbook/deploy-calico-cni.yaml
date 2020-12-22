@@ -1,0 +1,20 @@
+---
+- name: Deploy Calico CNI
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Copy Calico manifest
+    copy:
+      src: ../manifests/calico/calico.yaml
+      dest: "/tmp/calico.yaml"
+  - name: Deploy Calico manifest
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl apply -f /tmp/calico.yaml"
+    register: calico_deployment_result
+  - name: Show calico deployment result
+    debug:
+      msg: "{{ calico_deployment_result }}"

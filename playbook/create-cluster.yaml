@@ -1,0 +1,120 @@
+---
+- name: Ensure docker and kubelet are properly initialized
+  hosts: kuball
+  become: true
+  vars: 
+    node_ip: "{{ hostvars[inventory_hostname]['ansible_'+internal_interface]['ipv4']['address'] }}"
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Ensure docker service is enabled and started
+    service:
+      name: docker
+      enabled: yes
+      state: started
+  - name: Show node ip
+    debug:
+      var: node_ip
+  - name: "Set node ip to kubelet extra args"
+    lineinfile:
+      path: "/etc/sysconfig/kubelet"
+      regexp: '^KUBELET_EXTRA_ARGS='
+      line: 'KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}'
+      backup: yes
+  - name: Ensure kubelet service is restarted
+    service:
+      name: kubelet
+      enabled: yes
+      state: restarted
+      
+- name: Initiate kubernetes cluster
+  hosts: initkubmaster
+  become: true
+  vars: 
+    api_server_advertise_address: "{{ hostvars[inventory_hostname]['ansible_'+internal_interface]['ipv4']['address'] }}"
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Show api server adevrtise address
+    debug:
+      var: api_server_advertise_address
+  - name: "Ensure kubectl user {{ kubectl_user }} exists"
+    user:
+      name: "{{ kubectl_user }}"
+      state: present
+  - name: Register kubernetes admin.conf file existence
+    stat:
+      path: /etc/kubernetes/admin.conf
+    register: k8s_conf_exists
+  - name: Run kubadm init when kubernetes admin.conf file does not exist
+    command:
+      argv:
+        - kubeadm
+        - init
+        - --apiserver-advertise-address={{ api_server_advertise_address }}
+    when: not k8s_conf_exists.stat.exists
+    register: kubadm_init_output
+  - name: "Ensure {{ kubectl_user }} .kube dir exists"
+    file:
+      path: "~{{ kubectl_user }}/.kube"
+      state: directory
+  - name: Register kubernetes admin.conf file existence
+    stat:
+      path: /etc/kubernetes/admin.conf
+    register: k8s_conf_exists
+  - name: "Ensure kube config is copied in {{ kubectl_user }} .kube"
+    copy:
+      remote_src: yes
+      src: /etc/kubernetes/admin.conf
+      dest: "~{{ kubectl_user }}/.kube/config"
+      owner: "{{ kubectl_user }}"
+      group: "{{ kubectl_user }}"
+      mode: '0600'
+    until: k8s_conf_exists.stat.exists == true
+    retries: 10
+    delay: 10
+  - name: Set worker nodes join command fact
+    set_fact: 
+      CLUSTER_JOIN_COMMAND: "{{ kubadm_init_output.stdout_lines[-2] | regex_replace('\\\\','') }}  {{ kubadm_init_output.stdout_lines[-1] }}"
+    when: (kubadm_init_output is defined) and (kubadm_init_output.stdout_lines is defined)
+  - name: Display worker nodes join command
+    debug:
+      var: hostvars[inventory_hostname]['CLUSTER_JOIN_COMMAND']
+  
+
+- name: Join workers
+  hosts: kubworkers
+  become: true
+  vars:
+    CLUSTER_JOIN_COMMAND: "{{ hostvars[groups['initkubmaster'][0]]['CLUSTER_JOIN_COMMAND'] | default('') }}"
+    node_ip: "{{ hostvars[inventory_hostname]['ansible_'+internal_interface]['ipv4']['address'] }}"
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Show cluster join command
+    debug:
+      var: CLUSTER_JOIN_COMMAND
+  - name: Execute cluster join command
+    command: "{{ CLUSTER_JOIN_COMMAND }}"
+    register: join_command_result
+    when: (CLUSTER_JOIN_COMMAND is defined) and (CLUSTER_JOIN_COMMAND | length > 0)
+  - name: Show cluster join command output
+    debug:
+      var: join_command_result
+    when: (CLUSTER_JOIN_COMMAND is defined) and (CLUSTER_JOIN_COMMAND | length > 0)
+    
+- name: Check kubernetes cluster
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Run kubectl get nodes
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl get nodes -o wide"
+    register: get_nodes_output
+  - name: Display kubectl get nodes output
+    debug:
+      var: get_nodes_output

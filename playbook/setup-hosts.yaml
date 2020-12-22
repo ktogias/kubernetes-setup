@@ -83,7 +83,6 @@
       ip4: "{{ internal_ip }}"
       gw4: "{{ internal_gateway if internal_gateway is defined else omit}}"
       dns4: "{{ internal_dns if internal_dns is defined else omit}}"
-      ip6: ""
       autoconnect: true
       state: present
   - name: Ensure bootproto is set to none for internal interface
@@ -113,7 +112,6 @@
       ip4: "{{ public_ip }}"
       gw4: "{{ public_gateway }}"
       dns4: "{{ public_dns }}"
-      ip6: ""
       autoconnect: true
       state: present
   - name: Ensure bootproto is set to none for public interface

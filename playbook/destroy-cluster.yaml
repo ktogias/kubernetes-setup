@@ -1,0 +1,42 @@
+---
+- name: Drain and delete workers
+  hosts: initkubmaster
+  become: true
+  vars_prompt:
+    - name: "confirm"
+      prompt: "CAUTION! This will stop all deployments and make the cluster unusable! Do you really whant to drain and delete all workers (yes/no)?"
+      private: no
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Drain workers
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl drain {{ item }} --delete-local-data --force --ignore-daemonsets"
+    ignore_errors: yes
+    with_items: "{{ groups['kubworkers'] }}"
+    when: confirm | bool
+  - name: Delete workers
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl delete node {{ item }}"
+    ignore_errors: yes
+    with_items: "{{ groups['kubworkers'] }}"
+    when: confirm | bool
+    
+- name: Reset kubadm
+  hosts: kuball
+  become: true
+  vars_prompt:
+    - name: "confirm"
+      prompt: "CAUTION! This will remove any cluster config and detstory the cluster! Do you really whant to reset kubeadm on all nodes (yes/no)?"
+      private: no
+  tasks:
+  - name: Reset kubeadm
+    command: "kubeadm reset -f"
+    when: confirm | bool
+  - name: Reboot
+    reboot:
+    when: confirm | bool
+  

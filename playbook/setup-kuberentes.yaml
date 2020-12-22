@@ -88,4 +88,52 @@
       name: kubelet
       enabled: yes
       state: started
-
+      
+- name: Open network ports on kubernetes masters
+  hosts: kubmasters
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml 
+  - name: Ensure that required ports are open on internal zone
+    ansible.posix.firewalld:
+      zone: "{{ internal_zone  }}"
+      port: "{{ item }}"
+      permanent: yes
+      immediate: yes
+      state: enabled
+    loop: "{{ master_internal_open_ports  }}"
+  - name: Ensure that calico required ports are open on internal zone
+    ansible.posix.firewalld:
+      zone: "{{ internal_zone  }}"
+      port: "{{ item }}"
+      permanent: yes
+      immediate: yes
+      state: enabled
+    loop: "{{ calico_open_ports }}"
+    
+- name: Open network ports on kubernetes workers
+  hosts: kubworkers
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml 
+  - name: Ensure that required ports are open on internal zone
+    ansible.posix.firewalld:
+      zone: "{{ internal_zone  }}"
+      port: "{{ item }}"
+      permanent: yes
+      immediate: yes
+      state: enabled
+    loop: "{{ worker_internal_open_ports  }}"
+  - name: Ensure that calico required ports are open on internal zone
+    ansible.posix.firewalld:
+      zone: "{{ internal_zone  }}"
+      port: "{{ item }}"
+      permanent: yes
+      immediate: yes
+      state: enabled
+    loop: "{{ calico_open_ports }}"
+  
