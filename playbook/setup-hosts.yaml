@@ -91,16 +91,6 @@
         regexp: '^BOOTPROTO='
         line: 'BOOTPROTO=none'
         backup: yes
-  - name: "Ensure ipv6init is {{internal_ipv6_init}} for internal interface"
-    lineinfile:
-        path: "/etc/sysconfig/network-scripts/ifcfg-{{ internal_interface }}"
-        regexp: '^IPV6INIT='
-        line: "IPV6INIT={{internal_ipv6_init}}"
-  - name: Ensure internal zone is set for internal interface
-    lineinfile:
-        path: "/etc/sysconfig/network-scripts/ifcfg-{{ internal_interface }}"
-        line: "ZONE={{ internal_zone }}"
-        create: yes
   - debug: 
       msg: 
       - "{{ internal_ip }}"
@@ -125,16 +115,6 @@
         regexp: '^BOOTPROTO='
         line: 'BOOTPROTO=none'
         backup: yes
-  - name: "Ensure ipv6init is {{public_ipv6_init}} for public interface"
-    lineinfile:
-        path: "/etc/sysconfig/network-scripts/ifcfg-{{ public_interface }}"
-        regexp: '^IPV6INIT='
-        line: "IPV6INIT={{public_ipv6_init}}"
-  - name: Ensure public zone is set for public interface
-    lineinfile:
-        path: "/etc/sysconfig/network-scripts/ifcfg-{{ public_interface }}"
-        line: "ZONE={{ public_zone }}"
-        create: yes
   - debug: 
       msg: 
       - "{{ public_ip }}"

@@ -40,6 +40,9 @@
   - name: Show api server adevrtise address
     debug:
       var: api_server_advertise_address
+  - name: Show pod_network_cidr
+    debug:
+      var: pod_network_cidr
   - name: "Ensure kubectl user {{ kubectl_user }} exists"
     user:
       name: "{{ kubectl_user }}"
@@ -54,6 +57,7 @@
         - kubeadm
         - init
         - --apiserver-advertise-address={{ api_server_advertise_address }}
+        - --pod-network-cidr={{ pod_network_cidr }}
     when: not k8s_conf_exists.stat.exists
     register: kubadm_init_output
   - name: "Ensure {{ kubectl_user }} .kube dir exists"

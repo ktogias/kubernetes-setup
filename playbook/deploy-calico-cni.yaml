@@ -1,5 +1,7 @@
 ---
 - name: Prepare hosts for Calico CNI
+  tags:
+    - prepare
   hosts: kuball
   become: true
   tasks:
@@ -23,14 +25,6 @@
         sysctl_set: yes
         state: present
         reload: yes
-  - name: Ensure that calico required ports are open on internal zone
-    ansible.posix.firewalld:
-      zone: "{{ internal_zone  }}"
-      port: "{{ item }}"
-      permanent: yes
-      immediate: yes
-      state: enabled
-    loop: "{{ calico_open_ports }}"
       
 - name: Deploy Calico CNI
   hosts: initkubmaster
@@ -41,7 +35,7 @@
       file: vars.yaml
   - name: Copy Calico manifest
     copy:
-      src: ../manifests/calico/calico-nft.yaml
+      src: ../manifests/calico/calico.yaml
       dest: "/tmp/calico.yaml"
   - name: Deploy Calico manifest
     become: true

@@ -3,51 +3,11 @@ internal_interface: enp2s0
 internal_ip: 172.16.1.{{ groups['kuball'].index(inventory_hostname)+81 }}/24
   #internal_gateway: 
   #internal_dns:
-internal_zone: internal
-internal_ipv6_init: no
   #wrong_internal_ifcfg_name:
 public_interface: enp1s0
 public_ip: 192.168.0.{{ groups['kubpublic'].index(inventory_hostname)+81 }}/24
 public_gateway: 192.168.0.1
 public_dns: 
   - 192.168.0.1
-public_zone: public
-public_ipv6_init: no
-master_internal_open_ports:
-  - 6443/tcp
-  - 2379-2380/tcp
-  - 10250/tcp
-  - 10251/tcp
-  - 10252/tcp
-  - 10255/tcp
-worker_internal_open_ports:
-  - 6783/tcp
-  - 10250/tcp
-  - 10255/tcp
-  - 30000-32767/tcp
 kubectl_user: ktogias
-calico_open_ports:
-  - 179/tcp
-  - 4789/tcp
-  - 4789/udp
-  - 5473/tcp
-  - 443/tcp
-  - 6443/tcp
-  - 2379/tcp
-istio_open_ports:
-  - 15000/tcp
-  - 15001/tcp
-  - 15006/tcp
-  - 15008/tcp
-  - 15020/tcp
-  - 15021/tcp
-  - 15090/tcp
-  - 15010/tcp
-  - 15012/tcp
-  - 8080/tcp
-  - 443/tcp
-  - 15014/tcp
-  - 25/tcp
-  - 53/tcp
-  - 3306/tcp
-  - 27017/tcp
+pod_network_cidr: 10.100.0.0/16

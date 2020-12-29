@@ -1,5 +1,7 @@
 ---
 - name: Drain and delete workers
+  tags:
+    - prepare
   hosts: initkubmaster
   become: true
   vars_prompt:
@@ -36,6 +38,10 @@
   - name: Reset kubeadm
     command: "kubeadm reset -f"
     when: confirm | bool
+  - name: Ensure /etc/cni/net.d is not preset
+    file:
+      path: /etc/cni/net.d
+      state: absent
   - name: Reboot
     reboot:
     when: confirm | bool

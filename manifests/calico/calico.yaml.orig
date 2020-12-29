@@ -224,7 +224,6 @@ spec:
                 format: int32
                 type: integer
               keepOriginalNextHop:
-                default: false
                 description: Option to keep the original nexthop field when routes
                   are sent to a BGP Peer. Setting "true" configures the selected BGP
                   Peers node to use the "next hop keep;" instead of "next hop self;"(default)
@@ -3621,9 +3620,6 @@ spec:
             # Enable or Disable VXLAN on the default IP pool.
             - name: CALICO_IPV4POOL_VXLAN
               value: "Never"
-            # Set IPTABLES backend to NTF for Centos8
-            - name: FELIX_IPTABLESBACKEND
-              value: "NFT"
             # Set MTU for tunnel device used if ipip is enabled
             - name: FELIX_IPINIPMTU
               valueFrom:
