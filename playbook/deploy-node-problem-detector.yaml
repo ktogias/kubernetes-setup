@@ -1,0 +1,16 @@
+---
+- name: Deploy Node Problem Detector
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Deploy Node Problem Detector manifest
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl apply -f https://k8s.io/examples/debug/node-problem-detector.yaml"
+    register: node_problem_detector_deployment_result
+  - name: Show Node Problem Detector deployment result
+    debug:
+      msg: "{{ node_problem_detector_deployment_result }}"

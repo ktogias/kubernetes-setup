@@ -1,23 +1,5 @@
----
-- name: Prepare hosts for Istio
-  tags: 
-    - prepare
-  hosts: kuball
-  become: true
-  tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
-  - name: Ensure that istio required ports are open on internal zone
-    ansible.posix.firewalld:
-      zone: "{{ internal_zone  }}"
-      port: "{{ item }}"
-      permanent: yes
-      immediate: yes
-      state: enabled
-    loop: "{{ istio_open_ports }}"
-    
-- name: Istall istioctl
+--- 
+- name: Install istioctl
   tags: 
     - prepare
   hosts: initkubmaster
@@ -54,6 +36,7 @@
     become_user: "{{ kubectl_user }}"
     command: kubectl -n istio-operator get deployment istio-operator
     register: istio_operator_deployments
+    ignore_errors: yes
   - debug:
       var: istio_operator_deployments.stdout_lines | length
   - name: Deploy istio operator
@@ -66,6 +49,7 @@
     become_user: "{{ kubectl_user }}"
     command: kubectl get namespace istio-system
     register: istio_system_namespace_register
+    ignore_errors: yes
   - name: Create istio-system namespace
     become: true
     become_user: "{{ kubectl_user }}"
