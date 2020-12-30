@@ -24,6 +24,10 @@
       name: firewalld
       enabled: no
       state: stopped
+  - name: Ensure br_netfilter module is loaded
+    community.general.modprobe:
+        name: br_netfilter
+        state: present
   - name: Ensure net.bridge.bridge-nf-call-iptables is enabled
     sysctl:
         name: net.bridge.bridge-nf-call-iptables
