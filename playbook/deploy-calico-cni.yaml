@@ -14,10 +14,12 @@
         [keyfile]
         unmanaged-devices=interface-name:cali*;interface-name:tunl*;interface-name:vxlan.calico
       dest: /etc/NetworkManager/conf.d/calico.conf
-  - name: Restart NetworkManager
+    register: nm_unmanaged_config
+  - name: Restart NetworkManager after config change
     service:
       name: NetworkManager
       state: restarted
+    when: nm_unmanaged_config.changed
   - name: Ensure net.netfilter.nf_conntrack_max is increased
     sysctl:
         name: net.netfilter.nf_conntrack_max
