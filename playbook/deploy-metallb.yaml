@@ -1,0 +1,72 @@
+---
+- name: Deploy MetalLB
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Ensure kube proxy strict ARP mode is enabled
+    become: true
+    become_user: "{{ kubectl_user }}"
+    shell: "kubectl get configmap kube-proxy -n kube-system -o yaml | sed -e \"s/strictARP: false/strictARP: true/\" | kubectl apply -f - -n kube-system"
+  - name: Get current ARP mode
+    become: true
+    become_user: "{{ kubectl_user }}"
+    shell: "kubectl get configmap kube-proxy -n kube-system -o yaml | grep strictARP" 
+    register: kubeproxy_configmap_strict_arp
+  - name: Show current ARP mode
+    debug:
+      var: kubeproxy_configmap_strict_arp.stdout
+  - name: Apply namespace manifest
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.5/manifests/namespace.yaml"
+    register: metallb_namespace_application_result
+  - name: Show namespace manifest aplication result
+    debug:
+      msg: "{{ metallb_namespace_application_result }}"
+  - name: Apply metallb manifest
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.5/manifests/metallb.yaml"
+    register: metallb_application_result
+  - name: Show metallb manifest aplication result
+    debug:
+      msg: "{{ metallb_application_result }}"
+  - name: Register existence of memberlist secret
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: kubectl -n metallb-system get secret memberlist
+    register: get_secret_memberlist
+  - debug:
+      var: get_secret_memberlist.stdout_lines | length
+  - name: Create memberlist secret
+    become: true
+    become_user: "{{ kubectl_user }}"
+    shell: "kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey=\"$(openssl rand -base64 128)\""
+    register: metallb_secret_cration_result
+    when: get_secret_memberlist.stdout_lines | length == 0
+  - name: Show memberlist secret creation result
+    debug:
+      msg: "{{ metallb_secret_cration_result }}"
+    when: get_secret_memberlist.stdout_lines | length == 0
+- name: Configure MetalLB default pool
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Template configmap manifest
+    template:
+      src: ../manifests/metallb/configmap.tmpl.yaml
+      dest: "/tmp/metallb-configmap.yaml"
+  - name: Deploy configmap manifest
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl apply -f /tmp/metallb-configmap.yaml"
+    register: configmap_deployment_result
+  - name: Show configmap deployment result
+    debug:
+      msg: "{{ configmap_deployment_result }}"
