@@ -1,16 +1,19 @@
 --- calico.yaml.orig	2020-12-29 21:55:01.286000000 +0200
-+++ calico.yaml	2020-12-30 01:01:47.194763265 +0200
-@@ -3620,6 +3620,9 @@
++++ calico.yaml	2021-01-01 22:01:09.251231219 +0200
+@@ -3620,6 +3620,12 @@
              # Enable or Disable VXLAN on the default IP pool.
              - name: CALICO_IPV4POOL_VXLAN
                value: "Never"
++            # Increase IPSETS Refresh interval
++            - name: FELIX_IPSETSREFRESHINTERVAL
++              value: "180s"
 +            # Set IPTABLES backend to NTF for Centos8
 +            - name: FELIX_IPTABLESBACKEND
 +              value: "NFT"
              # Set MTU for tunnel device used if ipip is enabled
              - name: FELIX_IPINIPMTU
                valueFrom:
-@@ -3641,8 +3644,8 @@
+@@ -3641,8 +3647,8 @@
              # The default IPv4 pool to create on startup if none exists. Pod IPs will be
              # chosen from this range. Changing this value after installation will have
              # no effect. This should fall within `--cluster-cidr`.

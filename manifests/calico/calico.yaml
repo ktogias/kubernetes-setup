@@ -3620,6 +3620,9 @@ spec:
             # Enable or Disable VXLAN on the default IP pool.
             - name: CALICO_IPV4POOL_VXLAN
               value: "Never"
+            # Increase IPSETS Refresh interval
+            - name: FELIX_IPSETSREFRESHINTERVAL
+              value: "180s"
             # Set IPTABLES backend to NTF for Centos8
             - name: FELIX_IPTABLESBACKEND
               value: "NFT"
