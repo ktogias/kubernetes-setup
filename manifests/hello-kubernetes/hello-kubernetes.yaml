@@ -14,7 +14,7 @@ kind: Deployment
 metadata:
   name: hello-kubernetes
 spec:
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels:
       app: hello-kubernetes
@@ -23,8 +23,34 @@ spec:
       labels:
         app: hello-kubernetes
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - hello-kubernetes
+            topologyKey: "kubernetes.io/hostname"
       containers:
       - name: hello-kubernetes
         image: paulbouwer/hello-kubernetes:1.8
         ports:
         - containerPort: 8080
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: istio
+  name: ingress
+spec:
+  rules:
+  - host: hello-kubernetes.proastio.patra
+    http:
+      paths:
+      - path: /*
+        backend:
+          serviceName: hello-kubernetes
+          servicePort: 80
