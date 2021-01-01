@@ -13,7 +13,7 @@
   - name: Deploy Hello Kuberentes manifest
     become: true
     become_user: "{{ kubectl_user }}"
-    command: "kubectl apply -f /tmp/hello-kubernetes.yaml"
+    shell: "~/.istioctl/bin/istioctl kube-inject -f /tmp/hello-kubernetes.yaml | kubectl apply -f -"
     register: hello_kuberentes_deployment_result
   - name: Show Hello Kubernetes deployment result
     debug:
