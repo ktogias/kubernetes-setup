@@ -35,9 +35,9 @@
   - name: Include vars from vars.yaml
     include_vars:
       file: vars.yaml
-  - name: Copy Calico manifest
-    copy:
-      src: ../manifests/calico/calico.yaml
+  - name: Template Calico manifest
+    template:
+      src: ../manifests/calico/calico.tmpl.yaml
       dest: "/tmp/calico.yaml"
   - name: Deploy Calico manifest
     become: true

@@ -45,11 +45,11 @@
     become: true
     become_user: "{{ kubectl_user }}"
     shell: "kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey=\"$(openssl rand -base64 128)\""
-    register: metallb_secret_cration_result
+    register: metallb_secret_creation_result
     when: get_secret_memberlist.stdout_lines | length == 0
   - name: Show memberlist secret creation result
     debug:
-      msg: "{{ metallb_secret_cration_result }}"
+      msg: "{{ metallb_secret_creation_result }}"
     when: get_secret_memberlist.stdout_lines | length == 0
 - name: Configure MetalLB default pool
   hosts: initkubmaster

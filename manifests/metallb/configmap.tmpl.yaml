@@ -9,4 +9,4 @@ data:
     - name: default
       protocol: layer2
       addresses:
-      - {{ metallb_default_ip_pool_addresses }}
+      - {{ metallb.default_ip_pool_addresses }}

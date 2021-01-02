@@ -3620,12 +3620,32 @@ spec:
             # Enable or Disable VXLAN on the default IP pool.
             - name: CALICO_IPV4POOL_VXLAN
               value: "Never"
-            # Increase IPSETS Refresh interval
+
+{% if  calico.felix.iptables_lock_probe_interval_millis is defined %}
+            # AnsibleTmpl: Set IPTABLESLOCKPROBEINTERVALMILLIS
+            - name: FELIX_IPTABLESLOCKPROBEINTERVALMILLIS
+              value: "{{calico.felix.iptables_lock_probe_interval_millis}}"
+{% endif %}
+{% if  calico.felix.iptables_lock_timeout_secs is defined %}
+            # AnsibleTmpl: Set IPTABLESLOCKTIMEOUTSECS
+            - name: FELIX_IPTABLESLOCKTIMEOUTSECS
+              value: "{{calico.felix.iptables_lock_timeout_secs}}"
+{% endif %}
+{% if  calico.felix.iptables_refresh_interval is defined %}
+            # AnsibleTmpl: Set IPTABLES Refresh interval
+            - name: FELIX_IPTABLESREFRESHINTERVAL
+              value: "{{calico.felix.iptables_refresh_interval}}"
+{% endif %}
+{% if  calico.felix.ipsets_refresh_interval is defined %}
+            # AnsibleTmpl: Set IPSETS Refresh interval
             - name: FELIX_IPSETSREFRESHINTERVAL
-              value: "180s"
-            # Set IPTABLES backend to NTF for Centos8
+              value: "{{calico.felix.ipsets_refresh_interval}}"
+{% endif %}
+{% if ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "8"%}
+            # AnsibleTmpl: Set IPTABLES backend to NTF for Centos8
             - name: FELIX_IPTABLESBACKEND
               value: "NFT"
+{% endif %} 
             # Set MTU for tunnel device used if ipip is enabled
             - name: FELIX_IPINIPMTU
               valueFrom:
@@ -3647,8 +3667,15 @@ spec:
             # The default IPv4 pool to create on startup if none exists. Pod IPs will be
             # chosen from this range. Changing this value after installation will have
             # no effect. This should fall within `--cluster-cidr`.
+            # - name: CALICO_IPV4POOL_CIDR
+            #   value: "192.168.0.0/16"
+
+{% if  pod_network_cidr is defined %}
+            # AnsibleTmpl: Set pod network cidr
             - name: CALICO_IPV4POOL_CIDR
-              value: "10.100.0.0/16"
+              value: "{{pod_network_cidr}}"
+{% endif %}
+
             # Disable file logging so `kubectl logs` works.
             - name: CALICO_DISABLE_FILE_LOGGING
               value: "true"
@@ -3674,16 +3701,16 @@ spec:
               - /bin/calico-node
               - -felix-live
               - -bird-live
-            periodSeconds: 10
-            initialDelaySeconds: 10
-            failureThreshold: 6
+            periodSeconds: {{calico.liveness_probe.period_seconds | default(10)}}
+            initialDelaySeconds: {{calico.liveness_probe.initial_delay_seconds | default(10)}}
+            failureThreshold: {{calico.liveness_probe.failure_threshold | default(6)}}
           readinessProbe:
             exec:
               command:
               - /bin/calico-node
               - -felix-ready
               - -bird-ready
-            periodSeconds: 10
+            periodSeconds: {{calico.readiness_probe.period_seconds | default(10)}}
           volumeMounts:
             - mountPath: /lib/modules
               name: lib-modules

@@ -11,4 +11,18 @@ public_dns:
   - 192.168.0.1
 kubectl_user: ktogias
 pod_network_cidr: 10.100.0.0/16
-metallb_default_ip_pool_addresses: 192.168.0.80-192.168.0.89
+metallb:
+  default_ip_pool_addresses: 192.168.0.80-192.168.0.89
+# See https://docs.projectcalico.org/reference/felix/configuration for calico config
+#calico:
+#  felix:
+#    iptables_lock_probe_interval_millis: 50
+#    iptables_lock_timeout_secs: 10
+#    iptables_refresh_interval: 90
+#    ipsets_refresh_interval: 10
+#  liveness_probe:
+#    period_seconds: 30
+#    initial_delay_seconds: 30
+#    failure_threshold: 12
+#  readiness_probe:
+#    period_seconds: 30
