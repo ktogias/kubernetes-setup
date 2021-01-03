@@ -1,0 +1,28 @@
+---
+- name: Deploy Cert Manager and issuers
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Deploy cert-manager manifest
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.1.0/cert-manager.yaml"
+    register: cert_manager_deployment_result
+  - name: Show cert-manager deployment result
+    debug:
+      msg: "{{ cert_manager_deployment_result }}"
+  - name: Copy self signed issuer manifest
+    copy:
+      src: ../manifests/cert-manager/self-signed-issuer.yaml
+      dest: "/tmp/self-signed-issuer.yaml"
+  - name: Deploy self signed issuer manifest
+    become: true
+    become_user: "{{ kubectl_user }}"
+    shell: "kubectl apply -f /tmp/self-signed-issuer.yaml"
+    register: self_signed_issuer_deployment_result
+  - name: Show self signed issuer deployment result
+    debug:
+      msg: "{{ self_signed_issuer_deployment_result }}"
