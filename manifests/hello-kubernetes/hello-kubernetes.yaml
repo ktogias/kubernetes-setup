@@ -41,7 +41,7 @@ spec:
                 - hello-kubernetes
             topologyKey: "kubernetes.io/hostname"
       containers:
-      - name: hello-kubernetes
+      - name: hello-kubernsetes
         image: paulbouwer/hello-kubernetes:1.8
         ports:
         - containerPort: 8080
@@ -50,16 +50,16 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: hello-kubernetes-selfsigned
-  namespace: cluster-test
+  name: cluster-test.hello-kubernetes-selfsigned
+  namespace: istio-system
 spec:
   dnsNames:
-    - hello-kubernetes.proastio.patra
-  secretName: hello-kubernetes-certificate-selfsigned
+    - hellokub.home.ktogias.gr
+  secretName: cluster-test.hello-kubernetes-certificate-selfsigned
   issuerRef:
     name: selfsigned
     kind: ClusterIssuer
-  commonName: hello-kubernetes.proastio.patra
+  commonName: hellokub.home.ktogias.gr
 
 ---
 apiVersion: networking.istio.io/v1alpha3
@@ -76,16 +76,16 @@ spec:
       name: http
       protocol: HTTP
     hosts:
-    - "hello-kubernetes.proastio.patra"
+    - "hellokub.home.ktogias.gr"
   - port:
       number: 443
       name: https
       protocol: HTTPS
     tls:
       mode: SIMPLE
-      credentialName: hello-kubernetes-certificate-selfsigned
+      credentialName: cluster-test.hello-kubernetes-certificate-selfsigned
     hosts:
-    - "hello-kubernetes.proastio.patra"
+    - "hellokub.home.ktogias.gr"
 
 ---
 apiVersion: networking.istio.io/v1alpha3
@@ -95,7 +95,7 @@ metadata:
   namespace: cluster-test
 spec:
   hosts:
-  - "hello-kubernetes.proastio.patra"
+  - "hellokub.home.ktogias.gr"
   gateways:
   - hello-kubernetes
   http:
