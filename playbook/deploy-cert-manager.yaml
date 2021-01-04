@@ -26,3 +26,15 @@
   - name: Show self signed issuer deployment result
     debug:
       msg: "{{ self_signed_issuer_deployment_result }}"
+  - name: Copy letsencrypt staging issuer manifest
+    copy:
+      src: ../manifests/cert-manager/letsencrypt-staging-issuer.yaml
+      dest: "/tmp/letsencrypt-staging-issuer.yaml"
+  - name: Deploy letsencrypt staging issuer manifest
+    become: true
+    become_user: "{{ kubectl_user }}"
+    shell: "kubectl apply -f /tmp/letsencrypt-staging-issuer.yaml"
+    register: letsencrypt_staging_issuer_deployment_result
+  - name: Show letsencrypt staging issuer deployment result
+    debug:
+      msg: "{{ letsencrypt_staging_issuer_deployment_result }}"
