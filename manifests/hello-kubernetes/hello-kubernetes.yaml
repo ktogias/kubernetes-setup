@@ -50,14 +50,14 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: cluster-test.hello-kubernetes-selfsigned
+  name: cluster-test.hello-kubernetes
   namespace: istio-system
 spec:
   dnsNames:
     - hellokub.home.ktogias.gr
-  secretName: cluster-test.hello-kubernetes-certificate-selfsigned
+  secretName: cluster-test.hello-kubernetes-certificate
   issuerRef:
-    name: selfsigned
+    name: letsencrypt
     kind: ClusterIssuer
   commonName: hellokub.home.ktogias.gr
 
@@ -83,7 +83,7 @@ spec:
       protocol: HTTPS
     tls:
       mode: SIMPLE
-      credentialName: cluster-test.hello-kubernetes-certificate-selfsigned
+      credentialName: cluster-test.hello-kubernetes-certificate
     hosts:
     - "hellokub.home.ktogias.gr"
 

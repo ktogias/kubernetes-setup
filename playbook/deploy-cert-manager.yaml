@@ -38,3 +38,15 @@
   - name: Show letsencrypt staging issuer deployment result
     debug:
       msg: "{{ letsencrypt_staging_issuer_deployment_result }}"
+  - name: Copy letsencrypt production issuer manifest
+    copy:
+      src: ../manifests/cert-manager/letsencrypt-issuer.yaml
+      dest: "/tmp/letsencrypt-issuer.yaml"
+  - name: Deploy letsencrypt production issuer manifest
+    become: true
+    become_user: "{{ kubectl_user }}"
+    shell: "kubectl apply -f /tmp/letsencrypt-issuer.yaml"
+    register: letsencrypt_issuer_deployment_result
+  - name: Show letsencrypt production issuer deployment result
+    debug:
+      msg: "{{ letsencrypt_issuer_deployment_result }}"
