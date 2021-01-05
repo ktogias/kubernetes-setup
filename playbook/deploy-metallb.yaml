@@ -39,6 +39,7 @@
     become_user: "{{ kubectl_user }}"
     command: kubectl -n metallb-system get secret memberlist
     register: get_secret_memberlist
+    ignore_errors: yes
   - debug:
       var: get_secret_memberlist.stdout_lines | length
   - name: Create memberlist secret
