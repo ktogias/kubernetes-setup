@@ -1,0 +1,94 @@
+---
+- name: Ensure docker and kubelet are properly initialized on new nodes
+  hosts: newkubnodes
+  become: true
+  vars: 
+    node_ip: "{{ hostvars[inventory_hostname]['ansible_'+internal_interface]['ipv4']['address'] }}"
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Ensure docker service is enabled and started
+    service:
+      name: docker
+      enabled: yes
+      state: started
+  - name: Show node ip
+    debug:
+      var: node_ip
+  - name: "Set node ip to kubelet extra args"
+    lineinfile:
+      path: "/etc/sysconfig/kubelet"
+      regexp: '^KUBELET_EXTRA_ARGS='
+      line: 'KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}'
+      backup: yes
+  - name: Ensure kubelet service is restarted
+    service:
+      name: kubelet
+      enabled: yes
+      state: restarted
+
+- name: Create join token
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Create token and join command
+    command: kubeadm token create --print-join-command
+    register: kubadm_token_create_output
+  - name: Display kubadm_token_create_output
+    debug:
+      var: kubadm_token_create_output
+  - name: Set join command fact
+    set_fact: 
+      CLUSTER_JOIN_COMMAND: "{{ kubadm_token_create_output.stdout_lines[0] | regex_replace('\\\\','') }}"
+      CLUSTER_JOIN_TOKEN: "{{ (kubadm_token_create_output.stdout_lines[0] | regex_search(qry, '\\1'))[0] }}"
+    vars:
+      qry: '\-\-token\s*([A-Za-z0-9\.]*)'
+  - name: Display join command
+    debug:
+      var: hostvars[inventory_hostname]['CLUSTER_JOIN_COMMAND']
+  - name: Display join token
+    debug:
+      var: hostvars[inventory_hostname]['CLUSTER_JOIN_TOKEN']
+
+- name: Join new workers
+  hosts: newkubnodes
+  become: true
+  vars:
+    CLUSTER_JOIN_COMMAND: "{{ hostvars[groups['initkubmaster'][0]]['CLUSTER_JOIN_COMMAND'] | default('') }}"
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Show cluster join command
+    debug:
+      var: CLUSTER_JOIN_COMMAND
+  - name: Execute cluster join command
+    command: "{{ CLUSTER_JOIN_COMMAND }}"
+    register: join_command_result
+    when: (CLUSTER_JOIN_COMMAND is defined) and (CLUSTER_JOIN_COMMAND | length > 0)
+  - name: Show cluster join command output
+    debug:
+      var: join_command_result
+    when: (CLUSTER_JOIN_COMMAND is defined) and (CLUSTER_JOIN_COMMAND | length > 0)  
+
+- name: Delete join token and check kubernetes cluster
+  hosts: initkubmaster
+  become: true
+  vars:
+    CLUSTER_JOIN_TOKEN: "{{ hostvars[groups['initkubmaster'][0]]['CLUSTER_JOIN_TOKEN'] | default('') }}"
+  tasks:
+  - name: Delete join token
+    command: "kubeadm token delete {{CLUSTER_JOIN_TOKEN}}"
+    when: (CLUSTER_JOIN_TOKEN is defined) and (CLUSTER_JOIN_TOKEN | length > 0)
+  - name: Run kubectl get nodes
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl get nodes -o wide"
+    register: get_nodes_output
+  - name: Display kubectl get nodes output
+    debug:
+      var: get_nodes_output
