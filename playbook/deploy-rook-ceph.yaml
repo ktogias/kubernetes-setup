@@ -1,0 +1,83 @@
+---
+- name: Setup rook submodule
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Init project submodules
+    command: 
+      cmd: git submodule update --init
+      chdir: ../
+  - name: Checkout rook release {{rook.release_tag}}
+    command: 
+      cmd: git submodule update --init
+      chdir: ../manifests/rook
+    when: rook.release_tag is defined
+
+- name: Deploy the rook operator
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Copy crds manifest
+    copy:
+      src: ../manifests/rook/cluster/examples/kubernetes/ceph/crds.yaml
+      dest: /tmp/rook-ceph-crds.yaml
+  - name: Copy common manifest
+    copy:
+      src: ../manifests/rook/cluster/examples/kubernetes/ceph/common.yaml
+      dest: /tmp/rook-ceph-common.yaml
+  - name: Copy operator manifest
+    copy:
+      src: ../manifests/rook/cluster/examples/kubernetes/ceph/operator.yaml
+      dest: /tmp/rook-ceph-operator.yaml
+  - name: Deploy manifests
+    become: true
+    become_user: "{{ kubectl_user }}"
+    shell: "kubectl apply -f /tmp/rook-ceph-crds.yaml -f /tmp/rook-ceph-common.yaml -f /tmp/rook-ceph-operator.yaml"
+    register: rook_ceph_operator_deployment_result
+  - name: Show operator deployment result
+    debug:
+      msg: "{{ rook_ceph_operator_deployment_result }}"
+  - name: Verify the operator is in the `Running` state
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl -n rook-ceph get pod -o jsonpath='{.items[*].status.containerStatuses[*].ready}'"
+    register: rook_ceph_operator_status
+    until: rook_ceph_operator_status.stdout_lines[0] == "true"
+    retries: 10
+    delay: 10
+  - name: Show operator status
+    debug:
+      msg: "{{ rook_ceph_operator_status.stdout_lines }}"
+  - name: Copy cluster manifest
+    copy:
+      src: ../manifests/rook/cluster/examples/kubernetes/ceph/cluster.yaml
+      dest: /tmp/rook-ceph-cluster.yaml
+  - name: Copy toolbox manifest
+    copy:
+      src: ../manifests/rook/cluster/examples/kubernetes/ceph/toolbox.yaml
+      dest: /tmp/rook-ceph-toolbox.yaml
+  - name: Deploy cluster and toolbox manifests
+    become: true
+    become_user: "{{ kubectl_user }}"
+    shell: "kubectl apply -f /tmp/rook-ceph-cluster.yaml -f /tmp/rook-ceph-toolbox.yaml"
+    register: rook_ceph_cluster_toolbox_deployment_result
+  - name: Show cluster and toolbox deployment result
+    debug:
+      msg: "{{ rook_ceph_cluster_toolbox_deployment_result }}"
+  #- name: Verify all rook-ceph pods are in the `Running` state
+  #  become: true
+  #  become_user: "{{ kubectl_user }}"
+  #  command: "kubectl -n rook-ceph get pod -o jsonpath='{.items[*].status.containerStatuses[*].ready}'"
+  #  register: rook_ceph_pods_status
+  #  until: rook_ceph_pods_status.stdout_lines | unique | length == 2 and "true" in (rook_ceph_pods_status.stdout_lines | unique)
+  #  retries: 10
+  #  delay: 10
+  
+  
