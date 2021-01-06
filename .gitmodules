@@ -1,0 +1,3 @@
+[submodule "manifests/rook"]
+	path = manifests/rook
+	url = https://github.com/rook/rook.git
