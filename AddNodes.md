@@ -7,3 +7,6 @@ ansible newkubnodes -a "reboot "
 ansible-playbook test-hosts-networking.yaml
 ansible-playbook setup-kuberentes.yaml --limit newkubnodes
 ansible newkubnodes -a "reboot "
+ansible-playbook add-nodes.yaml
+ansible-playbook deploy-calico-cni.yaml
+Remove newkubnodes group from hosts file
