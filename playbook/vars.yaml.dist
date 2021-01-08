@@ -13,6 +13,8 @@ kubectl_user: ktogias
 pod_network_cidr: 10.100.0.0/16
 metallb:
   default_ip_pool_addresses: 192.168.0.80-192.168.0.89
+#rook:
+#  release_tag: v1.5.4
 # See https://docs.projectcalico.org/reference/felix/configuration for calico config
 #calico:
 #  felix:
@@ -26,3 +28,6 @@ metallb:
 #    failure_threshold: 12
 #  readiness_probe:
 #    period_seconds: 30
+#kubelet:
+#  extra_args:
+#    cpu_cfs_quota: "false"
