@@ -47,7 +47,7 @@
   - name: Verify the operator is in the `Running` state
     become: true
     become_user: "{{ kubectl_user }}"
-    command: "kubectl -n rook-ceph get pod -o jsonpath='{.items[*].status.containerStatuses[*].ready}'"
+    command: "kubectl -l app=rook-ceph-operator -n rook-ceph get pod -o jsonpath='{.items[*].status.containerStatuses[*].ready}'"
     register: rook_ceph_operator_status
     until: rook_ceph_operator_status.stdout_lines[0] == "true"
     retries: 10
