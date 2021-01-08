@@ -42,6 +42,10 @@
     file:
       path: /etc/cni/net.d
       state: absent
+  - name: Ensure /var/lib/rook is not preset
+    file:
+      path: /var/lib/rook
+      state: absent
   - name: Reboot
     reboot:
     when: confirm | bool
