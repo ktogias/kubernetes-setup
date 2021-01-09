@@ -47,3 +47,35 @@
   - name: Show calico deployment result
     debug:
       msg: "{{ calico_deployment_result }}"
+
+- name: Verify deployment
+  tags:
+    - verify
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Verify all kube-system pods are in the `Ready` state
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl -n kube-system get pod -o jsonpath='{.items[*].status.containerStatuses[*].ready}'"
+    register: kube_system_pods_status
+    until: 'kube_system_pods_status.stdout_lines[0] is match("^true\s[true\s]*true$")'
+    retries: 10
+    delay: 10
+  - name: Display kube-system pods state verification output
+    debug:
+      var: kube_system_pods_status.stdout_lines[0]
+  - name: Verify all nodes are in the `Ready` state
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl get nodes -o jsonpath='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'"
+    register: nodes_status
+    until: nodes_status.stdout_lines[0] is not match("Ready=False")
+    retries: 10
+    delay: 10
+  - name: Display nodes state verification output
+    debug:
+      var: nodes_status.stdout_lines[0]
