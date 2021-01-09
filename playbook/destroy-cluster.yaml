@@ -32,7 +32,7 @@
   become: true
   vars_prompt:
     - name: "confirm"
-      prompt: "CAUTION! This will remove any cluster config and detstory the cluster! Do you really whant to reset kubeadm on all nodes (yes/no)?"
+      prompt: "CAUTION! This will remove any cluster config and detstory the cluster! It will also dd clean all devices defined in clean_devices var!! POTENTIAL DATA LOSS AND IRREVERSIBLE DAMAGE!!! Do you really whant to continue (yes/no)?"
       private: no
   tasks:
   - name: Reset kubeadm
@@ -46,6 +46,35 @@
     file:
       path: /var/lib/rook
       state: absent
+  - name: Ensure gdisk is installed
+    yum:
+      name: gdisk
+      state: present
+  - debug:
+      var: clean_devices
+  - name: Register device to clean existence
+    stat:
+      path: "{{item}}"
+    register: devices_to_clean
+    loop: "{{clean_devices}}"
+    when: clean_devices is defined
+  - name: Ensure disks are zapped
+    command: "sgdisk --zap-all {{item}}"
+    loop: "{{clean_devices}}"
+    loop_control:
+      index_var: device_index
+    when: (clean_devices is defined) and (devices_to_clean.results[device_index].stat.exists | bool)
+  - name: Ensure disks are cleaned with dd
+    command: "dd if=/dev/zero of={{item}} bs=1M count=100 oflag=direct,dsync"
+    loop: "{{clean_devices}}"
+    loop_control:
+      index_var: device_index
+    when: (clean_devices is defined) and (devices_to_clean.results[device_index].stat.exists | bool)
+  - name: Ensure mapped devices are removed
+    shell: "ls /dev/mapper/ceph-* | xargs -I% -- dmsetup remove %"
+  - name: Ensure /dev/ceph-* files are removed
+    shell: "rm -rf /dev/ceph-*"
+
   - name: Reboot
     reboot:
     when: confirm | bool
