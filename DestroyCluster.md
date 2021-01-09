@@ -1,0 +1,1 @@
+ansible-playbook destroy-cluster.yaml --extra-vars="{'clean_devices':['/dev/vdb']}"
