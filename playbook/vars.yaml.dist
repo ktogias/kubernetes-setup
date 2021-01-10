@@ -13,8 +13,6 @@ kubectl_user: ktogias
 pod_network_cidr: 10.100.0.0/16
 metallb:
   default_ip_pool_addresses: 192.168.0.80-192.168.0.89
-#rook:
-#  release_tag: v1.5.4
 # See https://docs.projectcalico.org/reference/felix/configuration for calico config
 #calico:
 #  felix:
@@ -31,3 +29,39 @@ metallb:
 #kubelet:
 #  extra_args:
 #    cpu_cfs_quota: "false"
+rook_ceph:
+  cluster:
+    network:
+      provider: host
+    dashboard:
+      enabled: true
+      ssl: false 
+    monitoring:
+      enabled: false
+    healthCheck:
+      livenessProbe:
+        mon:
+          disabled: false
+        mgr:
+          disabled: false
+        osd:
+          disabled: false  
+  block_storage:
+    pool:
+      metadata:
+        name: blockpool
+      spec:
+        replicated:
+          size: 3
+        status_check:
+          mirror:
+            disabled: false
+            interval: 60s
+    storage_class:
+      metadata:
+        name: rook-ceph-block
+    testpvc:
+      spec:
+        resources:
+          requests:
+            storage: 20Gi

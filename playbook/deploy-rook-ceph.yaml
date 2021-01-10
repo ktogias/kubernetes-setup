@@ -11,13 +11,8 @@
     command: 
       cmd: git submodule update --init
       chdir: ../
-  - name: Checkout rook release {{rook.release_tag}}
-    command: 
-      cmd: git submodule update --init
-      chdir: ../manifests/rook
-    when: rook.release_tag is defined
 
-- name: Deploy the rook operator
+- name: Deploy the rook ceph operator and cluster
   hosts: initkubmaster
   become: true
   tasks:
@@ -26,15 +21,15 @@
       file: vars.yaml
   - name: Copy crds manifest
     copy:
-      src: ../manifests/rook/cluster/examples/kubernetes/ceph/crds.yaml
+      src: ../manifests/rook-ceph/crds.yaml
       dest: /tmp/rook-ceph-crds.yaml
   - name: Copy common manifest
     copy:
-      src: ../manifests/rook/cluster/examples/kubernetes/ceph/common.yaml
+      src: ../manifests/rook-ceph/common.yaml
       dest: /tmp/rook-ceph-common.yaml
   - name: Copy operator manifest
     copy:
-      src: ../manifests/rook/cluster/examples/kubernetes/ceph/operator.yaml
+      src: ../manifests/rook-ceph/operator.yaml
       dest: /tmp/rook-ceph-operator.yaml
   - name: Deploy manifests
     become: true
@@ -55,13 +50,13 @@
   - name: Show operator status
     debug:
       msg: "{{ rook_ceph_operator_status.stdout_lines }}"
-  - name: Copy cluster manifest
-    copy:
-      src: ../manifests/rook/cluster/examples/kubernetes/ceph/cluster.yaml
+  - name: Template cluster manifest
+    template:
+      src: ../manifests/rook-ceph/cluster.yaml.tmpl
       dest: /tmp/rook-ceph-cluster.yaml
   - name: Copy toolbox manifest
     copy:
-      src: ../manifests/rook/cluster/examples/kubernetes/ceph/toolbox.yaml
+      src: ../manifests/rook-ceph/toolbox.yaml
       dest: /tmp/rook-ceph-toolbox.yaml
   - name: Deploy cluster and toolbox manifests
     become: true
@@ -71,13 +66,111 @@
   - name: Show cluster and toolbox deployment result
     debug:
       msg: "{{ rook_ceph_cluster_toolbox_deployment_result }}"
-  #- name: Verify all rook-ceph pods are in the `Running` state
-  #  become: true
-  #  become_user: "{{ kubectl_user }}"
-  #  command: "kubectl -n rook-ceph get pod -o jsonpath='{.items[*].status.containerStatuses[*].ready}'"
-  #  register: rook_ceph_pods_status
-  #  until: rook_ceph_pods_status.stdout_lines | unique | length == 2 and "true" in (rook_ceph_pods_status.stdout_lines | unique)
-  #  retries: 10
-  #  delay: 10
-  
+
+- name: Verify deployment
+  tags:
+    - verify_cluster
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Verify all rook-ceph pods are in the `Ready` state
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl -n rook-ceph get pod -o jsonpath='{.items[*].status.containerStatuses[*].ready}' --field-selector=status.phase!=Succeeded"
+    register: rook_ceph_pods_status
+    until: 'rook_ceph_pods_status.stdout_lines[0] is match("^true\s[true\s]*true$")'
+    retries: 10
+    delay: 10
+  - name: Display rook-ceph pods state verification output
+    debug:
+      var: rook_ceph_pods_status.stdout_lines[0]
+
+- name: Deploy Block Pool and Block Storage Class
+  tags:
+    - block_storage
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - debug:
+      var: rook_ceph.block_storage
+  - name: Template block pool manifest
+    template:
+      src: ../manifests/rook-ceph/blockpool.yaml.tmpl
+      dest: /tmp/rook-ceph-blockpool.yaml
+  - name: Template block storage class manifest
+    template:
+      src: ../manifests/rook-ceph/blockstorageclass.yaml.tmpl
+      dest: /tmp/rook-ceph-blockstorageclass.yaml
+  - name: Deploy pool and storageclass manifests
+    become: true
+    become_user: "{{ kubectl_user }}"
+    shell: "kubectl apply -f /tmp/rook-ceph-blockpool.yaml -f /tmp/rook-ceph-blockstorageclass.yaml"
+    register: rook_ceph_block_storage_deployment_result
+  - name: Show block storage deployment result
+    debug:
+      msg: "{{ rook_ceph_block_storage_deployment_result }}"
+
+- name: Verify block storage
+  tags:
+    - verify_block_storage
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - debug:
+      var: rook_ceph.block_storage
+  - name: Verify block storage pool exists
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl get CephBlockPool {{rook_ceph.block_storage.pool.metadata.name | default('blockpool')}} -n rook-ceph -o name"
+    register: block_pool_status
+    until: 'block_pool_status.stdout_lines | length == 1'
+    retries: 1
+    delay: 10
+  - name: Display block storage pool existence verification output
+    debug:
+      var: block_pool_status.stdout_lines
+  - name: Verify block storage class exists
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl get StorageClass {{rook_ceph.block_storage.storage_class.metadata.name | default('rook-ceph-block')}} -o name"
+    register: block_storage_class_status
+    until: 'block_storage_class_status.stdout_lines | length == 1'
+    retries: 1
+    delay: 10
+  - name: Display block storage class existence verification output
+    debug:
+      var: block_storage_class_status.stdout_lines
+  - name: Template test PVC manifest
+    template:
+      src: ../manifests/rook-ceph/blockstoragetestpvc.yaml.tmpl
+      dest: /tmp/rook-ceph-blockstoragetestpvc.yaml
+  - name: Apply test PVC manifest
+    become: true
+    become_user: "{{ kubectl_user }}"
+    shell: "kubectl apply -f /tmp/rook-ceph-blockstoragetestpvc.yaml"
+    register: block_storage_test_pvc_manifest_application_result
+  - name: Show btest PVC manifest application result
+    debug:
+      msg: "{{ block_storage_test_pvc_manifest_application_result }}"
+  - name: Verify test PVC in the `Bound` state
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl get pvc rook-ceph-block-test-pv-claim -o jsonpath='{.status.phase}'"
+    register: rook_ceph_block_test_pvc_status_phase
+    until: 'rook_ceph_block_test_pvc_status_phase.stdout_lines[0] == "Bound"'
+    retries: 5
+    delay: 10
+  - name: Delete test PVC 
+    become: true
+    become_user: "{{ kubectl_user }}"
+    shell: "kubectl delete -f /tmp/rook-ceph-blockstoragetestpvc.yaml"
   
