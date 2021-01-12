@@ -1,0 +1,79 @@
+---
+- name: Deploy kubernetes dashboard
+  tags: deploy
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Copy recommended manifest
+    template:
+      src: ../manifests/kubernetes-dashboard/recommended.yaml
+      dest: "/tmp/kubernetes-dashboard-recommended.yaml"
+  - name: Ensure recommended manifest is applied
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: kubectl apply -f /tmp/kubernetes-dashboard-recommended.yaml
+    register: recommended_manifest_application_result
+  - name: Show recommended manifest application result
+    debug:
+      msg: "{{ recommended_manifest_application_result }}"
+
+- name: Verify deployment
+  tags: verify-deployment
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Verify dashboard pods are in the `Ready` state
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl get pods -n kubernetes-dashboard -o jsonpath='{.items[*].status.containerStatuses[*].ready}'"
+    register: pods_status
+    until: 'pods_status.stdout_lines[0] is match("^true[\strue]*$")'
+    retries: 10
+    delay: 10
+  - name: Display  dashboard pods state verification output
+    debug:
+      var: pods_status.stdout_lines[0]
+
+- name: Create user
+  tags: create-user
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Copy user manifest
+    template:
+      src: ../manifests/kubernetes-dashboard/user.yaml
+      dest: "/tmp/kubernetes-dashboard-user.yaml"
+  - name: Ensure user manifest is applied
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: kubectl apply -f /tmp/kubernetes-dashboard-user.yaml
+    register: user_manifest_application_result
+  - name: Show user manifest application result
+    debug:
+      msg: "{{ user_manifest_application_result }}"
+
+- name: Get user token
+  tags: user-token
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Describe user secret
+    become: true
+    become_user: "{{ kubectl_user }}"
+    shell: "kubectl -n kubernetes-dashboard describe secret $(kubectl -n kubernetes-dashboard get secret | grep admin-user | awk '{print $1}')"
+    register: describe_user_secret_result
+  - name: Display token line
+    debug:
+      msg: "{{describe_user_secret_result.stdout_lines[-1]}}"
