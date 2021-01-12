@@ -87,6 +87,17 @@
   - name: Display rook-ceph pods state verification output
     debug:
       var: rook_ceph_pods_status.stdout_lines[0]
+  - name: Verify ceph cluster health status is 'HEALTH_OK'
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl exec -n rook-ceph --stdin --tty rook-ceph-tools-f579cb58c-g9t65 -- ceph health"
+    register: rook_cluster_health_status
+    until: 'rook_cluster_health_status.stdout_lines[0] == "HEALTH_OK"'
+    retries: 10
+    delay: 10
+  - name: Display ceph cluster health status verification output
+    debug:
+      var: rook_cluster_health_status.stdout_lines[0]
 
 - name: Deploy Block Pool and Block Storage Class
   tags:
