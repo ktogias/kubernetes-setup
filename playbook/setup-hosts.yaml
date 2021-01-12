@@ -46,13 +46,27 @@
       state: started
 
 - name: Set hostnames
+  tags: hostnames
   hosts: kuball
   become: true
   tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
   - name: Ensure host name is set to the inventory hostname
     hostname:
       name: "{{ inventory_hostname }}"
-  
+  - name: Ensure /etc/hosts contains the internal ips of all hosts 
+    lineinfile:
+        path: "/etc/hosts"
+        regexp: '.*{{ host }}$'
+        line: "{{hostvars[host]['ansible_'+internal_interface]['ipv4']['address']}}   {{host}}"
+        backup: yes
+    loop: "{{groups['kuball']}}"
+    loop_control:
+      index_var: host_index
+      loop_var: host
+
 - name: Setup internal network of kubernetes cluster nodes
   hosts: kuball
   become: true

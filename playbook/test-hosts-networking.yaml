@@ -18,6 +18,13 @@
         - "-c {{ times }}"
         - "{{ item }}"
     loop: "{{ips}}"
+  - name: Ping kuball by hostname
+    command:
+      argv:
+        - ping
+        - "-c {{ times }}"
+        - "{{ item }}"
+    loop: "{{groups['kuball']}}"
   - name: Can reach google
     uri:
       url: http://google.com
