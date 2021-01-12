@@ -1,0 +1,32 @@
+---
+- name: Deploy kubernetes metrics server
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Template components manifest
+    template:
+      src: ../manifests/kubernetes-metrics-server/components.tmpl.yaml
+      dest: "/tmp/kubernetes-metrics-server-components.yaml"
+  - name: Ensure components manifest is applied
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: kubectl apply -f /tmp/kubernetes-metrics-server-components.yaml
+    register: components_manifest_application_result
+  - name: Show components manifest application result
+    debug:
+      msg: "{{ components_manifest_application_result }}"
+  - name: Verify metrics server pods are in the `Ready` state
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl get pods -n kube-system --selector=k8s-app=metrics-server -o jsonpath='{.items[*].status.containerStatuses[*].ready}'"
+    register: pods_status
+    until: 'pods_status.stdout_lines[0] is match("^true[\strue]*$")'
+    retries: 10
+    delay: 10
+  - name: Display metrics server pods state verification output
+    debug:
+      var: pods_status.stdout_lines[0]
+  
