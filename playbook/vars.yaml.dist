@@ -65,3 +65,6 @@ rook_ceph:
         resources:
           requests:
             storage: 20Gi
+kubernetes:
+  metrics_server:
+    kubelet_insecure_tls: true
