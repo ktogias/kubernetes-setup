@@ -7,14 +7,11 @@
   - name: Include vars from vars.yaml
     include_vars:
       file: vars.yaml
-  - name: Init project submodules
-    command: 
-      cmd: git submodule update --init
-      chdir: ../
 
 - name: Deploy the rook ceph operator and cluster
   hosts: initkubmaster
   become: true
+  gather_facts: no
   tasks:
   - name: Include vars from vars.yaml
     include_vars:
@@ -72,6 +69,7 @@
     - verify_cluster
   hosts: initkubmaster
   become: true
+  gather_facts: no
   tasks:
   - name: Include vars from vars.yaml
     include_vars:
@@ -104,6 +102,7 @@
     - block_storage
   hosts: initkubmaster
   become: true
+  gather_facts: no
   tasks:
   - name: Include vars from vars.yaml
     include_vars:
@@ -132,6 +131,7 @@
     - verify_block_storage
   hosts: initkubmaster
   become: true
+  gather_facts: no
   tasks:
   - name: Include vars from vars.yaml
     include_vars:
