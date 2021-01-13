@@ -69,7 +69,31 @@ kubernetes:
   metrics_server:
     kubelet_insecure_tls: true
   dashboard:
-      service:
-        spec:
-          type: LoadBalancer
-          loadBalancerIP: 192.168.0.81
+    noSsl: true
+istio:
+  operator:
+    spec:
+      components:
+        ingressGateways:
+        - name: istio-ingressgateway
+          k8s:
+            service:
+              loadBalancerIP: 192.168.0.80
+        - name: istio-admin-ingressgateway
+          enabled: true
+          k8s:
+            service:
+              loadBalancerIP: 192.168.0.81
+              ports:
+              - name: http2
+                port: 80
+                protocol: TCP
+                targetPort: 8080
+              - name: https
+                port: 443
+                protocol: TCP
+                targetPort: 8443
+              selector:
+                app: istio-admin-ingressgateway
+                istio: admin-ingressgateway
+              type: LoadBalancer
