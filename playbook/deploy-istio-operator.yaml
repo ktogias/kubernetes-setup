@@ -55,9 +55,9 @@
     become_user: "{{ kubectl_user }}"
     command: kubectl create ns istio-system
     when: istio_system_namespace_register.stdout_lines | length == 0
-  - name: Copy istio default configuration profile manifest
-    copy:
-      src: ../manifests/istio/istio-operator-default-configuaration-profile.yaml
+  - name: Template istio default configuration profile manifest
+    template:
+      src: ../manifests/istio/istio-operator-default-configuaration-profile.tmpl.yaml
       dest: "/tmp/istio-operator-default-configuaration-profile.yaml"
   - name: Install istio default configuration profile
     become: true

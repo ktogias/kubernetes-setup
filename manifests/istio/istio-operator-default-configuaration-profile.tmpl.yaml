@@ -1,0 +1,10 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  namespace: istio-system
+  name: default-istio-controlplane
+spec:
+  profile: default
+{% if istio.operator.spec is defined %}
+  {{istio.operator.spec | to_nice_yaml | indent(2)}}
+{% endif %}

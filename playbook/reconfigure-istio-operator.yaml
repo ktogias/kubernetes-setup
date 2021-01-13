@@ -1,0 +1,22 @@
+---
+- name: Update istio operator configuration
+  hosts: initkubmaster
+  become: true
+  gather_facts: no
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Template istio default configuration profile manifest
+    template:
+      src: ../manifests/istio/istio-operator-default-configuaration-profile.tmpl.yaml
+      dest: "/tmp/istio-operator-default-configuaration-profile.yaml"
+  - name: Install configuration profile manifest
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: "~{{ kubectl_user }}/.istioctl/bin/istioctl manifest install -f /tmp/istio-operator-default-configuaration-profile.yaml -y"
+    register: istioctl_manifest_install_result
+  - name: Show installation result
+    debug:
+      msg: "{{ istioctl_manifest_install_result }}"
+  
