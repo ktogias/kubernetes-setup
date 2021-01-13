@@ -38,8 +38,10 @@ metadata:
   namespace: kubernetes-dashboard
 spec:
   ports:
-    - port: 443
-      targetPort: 8443
+    - port: {%if (kubernetes.dashboard.noSsl | default(false) | bool) %}80{%else %}443{% endif %}
+
+      targetPort: {%if (kubernetes.dashboard.noSsl | default(false) | bool) %}9090{%else %}8443{% endif %}
+      
   selector:
     k8s-app: kubernetes-dashboard
 {% if kubernetes.dashboard.service.spec is defined %}
@@ -48,6 +50,7 @@ spec:
 
 ---
 
+{% if (kubernetes.dashboard.noSsl is not defined) or (kubernetes.dashboard.noSsl | default(false) | bool) is false %}
 apiVersion: v1
 kind: Secret
 metadata:
@@ -58,6 +61,7 @@ metadata:
 type: Opaque
 
 ---
+{% endif %}
 
 apiVersion: v1
 kind: Secret
@@ -193,26 +197,35 @@ spec:
           image: kubernetesui/dashboard:v2.1.0
           imagePullPolicy: Always
           ports:
-            - containerPort: 8443
+            - containerPort: {%if (kubernetes.dashboard.noSsl | default(false) | bool) %}9090{%else %}8443{% endif %}
+
               protocol: TCP
           args:
+{% if (kubernetes.dashboard.noSsl is not defined) or (kubernetes.dashboard.noSsl | default(false) | bool) is false %}
             - --auto-generate-certificates
+{% endif %}
+
             - --namespace=kubernetes-dashboard
             # Uncomment the following line to manually specify Kubernetes API server Host
             # If not specified, Dashboard will attempt to auto discover the API server and connect
             # to it. Uncomment only if the default does not work.
             # - --apiserver-host=http://my-address:port
           volumeMounts:
+{% if (kubernetes.dashboard.noSsl is not defined) or (kubernetes.dashboard.noSsl | default(false) | bool) is false %}
             - name: kubernetes-dashboard-certs
               mountPath: /certs
+{% endif %}
+
               # Create on-disk volume to store exec logs
             - mountPath: /tmp
               name: tmp-volume
           livenessProbe:
             httpGet:
-              scheme: HTTPS
+              scheme: {%if (kubernetes.dashboard.noSsl | default(false) | bool) %}HTTP{%else %}HTTPS{% endif %}
+
               path: /
-              port: 8443
+              port: {%if (kubernetes.dashboard.noSsl | default(false) | bool) %}9090{%else %}8443{% endif %}
+
             initialDelaySeconds: 30
             timeoutSeconds: 30
           securityContext:
@@ -221,9 +234,11 @@ spec:
             runAsUser: 1001
             runAsGroup: 2001
       volumes:
+{% if (kubernetes.dashboard.noSsl is not defined) or (kubernetes.dashboard.noSsl | default(false) | bool) is false %}
         - name: kubernetes-dashboard-certs
           secret:
             secretName: kubernetes-dashboard-certs
+{% endif %}
         - name: tmp-volume
           emptyDir: {}
       serviceAccountName: kubernetes-dashboard
