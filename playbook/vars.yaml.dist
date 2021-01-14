@@ -75,35 +75,35 @@ rook_ceph:
         resources:
           requests:
             storage: 20Gi
+
+istio_operator:
+  ingressGateways:
+  - name: istio-ingressgateway
+    overlays:
+      - kind: Service
+        name: istio-ingressgateway
+        patches:
+          - path: spec.loadBalancerIP
+            value: 192.168.0.90
+  - name: istio-admin-ingressgateway
+    enabled: true
+    defaultOverlays: true
+    overlays:
+      - kind: Service
+        name: istio-admin-ingressgateway
+        patches:
+          - path: spec.loadBalancerIP
+            value: 192.168.0.80
+
 kubernetes:
   metrics_server:
     kubelet_insecure_tls: true
   dashboard:
-    noSsl: true
-istio:
-  operator:
-    spec:
-      components:
-        ingressGateways:
-        - name: istio-ingressgateway
-          k8s:
-            service:
-              loadBalancerIP: 192.168.0.90
-        - name: istio-admin-ingressgateway
-          enabled: true
-          k8s:
-            service:
-              loadBalancerIP: 192.168.0.80
-              ports:
-              - name: http2
-                port: 80
-                protocol: TCP
-                targetPort: 8080
-              - name: https
-                port: 443
-                protocol: TCP
-                targetPort: 8443
-              selector:
-                app: istio-admin-ingressgateway
-                istio: admin-ingressgateway
-              type: LoadBalancer
+    istioHttpsIngress: 
+      enabled: true
+      istioGatewaySelector: admin-ingressgateway
+      port: 443
+      certificateIssuer: selfsigned
+      dns:
+      - "kub.proastio.patra"
+      uriPrefix: /

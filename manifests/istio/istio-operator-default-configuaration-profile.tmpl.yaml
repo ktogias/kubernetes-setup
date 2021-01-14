@@ -5,10 +5,10 @@ metadata:
   name: default-istio-controlplane
 spec:
   profile: default
-{% if istio.operator.spec.components.ingressGateways is defined %}
+{% if istio_operator.ingressGateways is defined %}
   components:
     ingressGateways:
-{% for gateway in istio.operator.spec.components.ingressGateways %}
+{% for gateway in istio_operator.ingressGateways %}
     - name: {{gateway.name}}
 {% if gateway.enabled is defined %}
       enabled: {{gateway.enabled}}
