@@ -1,0 +1,50 @@
+- kind: HorizontalPodAutoscaler
+  name: istio-{{ name }}
+  patches:
+    - path: metadata.labels.app
+      value: istio-{{ name }}
+    - path: metadata.labels.istio
+      value: {{ name }}
+    - path: spec.scaleTargetRef.name
+      value: istio-{{ name }}
+{% for overlay in overlays %}
+{% if overlay.kind == "HorizontalPodAutoscaler" and overlay.name == "istio-"+name %}
+    {{overlay.patches | to_nice_yaml | regex_replace('^-\s+','- ') |indent(2)}}
+{% endif %}
+{% endfor %}
+- kind: Deployment
+  name: istio-{{ name }}
+  patches:
+    - path: metadata.labels.app
+      value: istio-{{ name }}
+    - path: metadata.labels.istio
+      value: {{ name }}
+    - path: spec.selector.matchLabels.app
+      value: istio-{{ name }}
+    - path: spec.selector.matchLabels.istio
+      value: {{ name }}
+    - path: spec.template.metadata.labels.app
+      value: istio-{{ name }}
+    - path: spec.template.metadata.labels.istio
+      value: {{ name }}
+{% for overlay in overlays %}
+{% if overlay.kind == "Deployment" and overlay.name == "istio-"+name %}
+    {{overlay.patches | to_nice_yaml | regex_replace('^-\s+','- ') |indent(2)}}
+{% endif %}
+{% endfor %}
+- kind: Service
+  name: istio-{{ name }}
+  patches:
+    - path: metadata.labels.app
+      value: istio-{{ name }}
+    - path: metadata.labels.istio
+      value: {{ name }}
+    - path: spec.selector.app
+      value: istio-{{ name }}
+    - path: spec.selector.istio
+      value: {{ name }}
+{% for overlay in overlays %}
+{% if overlay.kind == "Service" and overlay.name == "istio-"+name %}
+    {{overlay.patches | to_nice_yaml | regex_replace('^-\s+','- ') |indent(2)}}
+{% endif %}
+{% endfor %}

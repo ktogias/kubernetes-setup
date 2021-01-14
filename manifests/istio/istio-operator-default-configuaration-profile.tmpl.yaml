@@ -5,6 +5,27 @@ metadata:
   name: default-istio-controlplane
 spec:
   profile: default
-{% if istio.operator.spec is defined %}
-  {{istio.operator.spec | to_nice_yaml | indent(2)}}
+{% if istio.operator.spec.components.ingressGateways is defined %}
+  components:
+    ingressGateways:
+{% for gateway in istio.operator.spec.components.ingressGateways %}
+    - name: {{gateway.name}}
+{% if gateway.enabled is defined %}
+      enabled: {{gateway.enabled}}
+{% endif %} 
+{% if gateway.overlays is defined or gateway.defaultOverlays | default(false) | bool %}
+      k8s:
+        overlays:
+{% if gateway.defaultOverlays | default(false) | bool %}
+{% macro defaultOverlays() %}
+{% with name = gateway.name | regex_replace('^istio-',''), overlays = gateway.overlays | default([]), indent = 8 %}
+{% include './ingress-gateway-default-overlays.tmpl.yaml' %}
+{% endwith %}
+{% endmacro %}
+        {{ defaultOverlays() | indent(8) }}
+{% elif gateway.overlays is defined %}
+        {{gateway.overlays | to_nice_yaml | indent(8)}}
+{% endif %} 
+{% endif %}  
+{% endfor %}
 {% endif %}
