@@ -52,7 +52,7 @@
     include_vars:
       file: vars.yaml
   - name: Copy user manifest
-    template:
+    copy:
       src: ../manifests/kubernetes-dashboard/user.yaml
       dest: "/tmp/kubernetes-dashboard-user.yaml"
   - name: Ensure user manifest is applied
@@ -63,6 +63,31 @@
   - name: Show user manifest application result
     debug:
       msg: "{{ user_manifest_application_result }}"
+
+- name: Configure istio https ingress
+  tags: istio-https-ingress
+  hosts: initkubmaster
+  become: true
+  gather_facts: False
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Template ingress manifest
+    template:
+      src: ../manifests/kubernetes-dashboard/istio-https-ingress.tmpl.yaml
+      dest: "/tmp/kubernetes-dashboard-istio-https-ingress.yaml"
+    when: kubernetes.dashboard.istioHttpsIngress.enabled | default(false) | bool
+  - name: Ensure ingress manifest is applied
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: kubectl apply -f /tmp/kubernetes-dashboard-istio-https-ingress.yaml
+    register: ingress_manifest_application_result
+    when: kubernetes.dashboard.istioHttpsIngress.enabled | default(false) | bool
+  - name: Show ingress manifest application result
+    debug:
+      msg: "{{ ingress_manifest_application_result }}"
+    when: kubernetes.dashboard.istioHttpsIngress.enabled | default(false) | bool
 
 - name: Get user token
   tags: user-token
