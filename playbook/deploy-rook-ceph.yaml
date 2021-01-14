@@ -184,4 +184,39 @@
     become: true
     become_user: "{{ kubectl_user }}"
     shell: "kubectl delete -f /tmp/rook-ceph-blockstoragetestpvc.yaml"
+
+- name: Configure dashboard istio https ingress
+  tags: dashboard-istio-https-ingress
+  hosts: initkubmaster
+  become: true
+  gather_facts: False
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Template ingress manifest
+    template:
+      src: ../manifests/rook-ceph/dashboard-istio-https-ingress.tmpl.yaml
+      dest: "/tmp/rook-ceph-dashboard-istio-https-ingress.yaml"
+    when: rook_ceph.dashboard.istioHttpsIngress.enabled | default(false) | bool
+  - name: Ensure ingress manifest is applied
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: kubectl apply -f /tmp/rook-ceph-dashboard-istio-https-ingress.yaml
+    register: ingress_manifest_application_result
+    when: rook_ceph.dashboard.istioHttpsIngress.enabled | default(false) | bool
+  - name: Show ingress manifest application result
+    debug:
+      msg: "{{ ingress_manifest_application_result }}"
+    when: rook_ceph.dashboard.istioHttpsIngress.enabled | default(false) | bool
+  - name: Get admin password
+    become: true
+    become_user: "{{ kubectl_user }}"
+    shell: kubectl -n rook-ceph get secret rook-ceph-dashboard-password -o jsonpath="{['data']['password']}" | base64 --decode && echo
+    register: dashboard_pass
+    when: rook_ceph.dashboard.istioHttpsIngress.enabled | default(false) | bool
+  - name: Show login info
+    debug:
+      msg: "username: admin , pass (WARNING!: SPECIAL CHARS ARE SHOWN ESCAPED!): {{dashboard_pass.stdout}} " 
+    when: rook_ceph.dashboard.istioHttpsIngress.enabled | default(false) | bool
   

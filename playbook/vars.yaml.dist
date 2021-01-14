@@ -56,6 +56,15 @@ rook_ceph:
           disabled: false
         osd:
           disabled: false  
+  dashboard:
+    istioHttpsIngress: 
+      enabled: true
+      istioGatewaySelector: admin-ingressgateway
+      port: 443
+      certificateIssuer: selfsigned
+      dns:
+      - "rook-ceph.kub.proastio.patra"
+      uriPrefix: /
   block_storage:
     pool:
       metadata:

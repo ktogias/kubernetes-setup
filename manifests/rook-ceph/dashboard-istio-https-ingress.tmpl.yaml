@@ -1,0 +1,54 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: rook-ceph.rook-ceph-mgr-dashboard
+  namespace: istio-system
+spec:
+  dnsNames:
+  {{rook_ceph.dashboard.istioHttpsIngress.dns | to_nice_yaml | indent(2)}}
+  secretName: rook-ceph.rook-ceph-mgr-dashboard-certificate
+  issuerRef:
+    name: {{rook_ceph.dashboard.istioHttpsIngress.certificateIssuer}}
+    kind: ClusterIssuer
+  commonName: {{rook_ceph.dashboard.istioHttpsIngress.dns[0]}}
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: rook-ceph-mgr-dashboard
+  namespace: rook-ceph
+spec:
+  selector:
+    istio: {{rook_ceph.dashboard.istioHttpsIngress.istioGatewaySelector}}
+  servers:
+  - port:
+      number: {{rook_ceph.dashboard.istioHttpsIngress.port | default(443) | int}}
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: rook-ceph.rook-ceph-mgr-dashboard-certificate
+    hosts:
+    {{rook_ceph.dashboard.istioHttpsIngress.dns | to_nice_yaml | indent(4)}}
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: rook-ceph-mgr-dashboard
+  namespace: rook-ceph
+spec:
+  hosts:
+  {{rook_ceph.dashboard.istioHttpsIngress.dns | to_nice_yaml | indent(2)}}
+  gateways:
+  - rook-ceph-mgr-dashboard
+  http:
+  - match:
+    - uri:
+        prefix: {{rook_ceph.dashboard.istioHttpsIngress.uriPrefix | default("/")}}
+    route:
+    - destination:
+        port:
+          number: 7000
+        host: rook-ceph-mgr-dashboard
