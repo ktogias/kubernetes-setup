@@ -53,8 +53,10 @@
       msg: "{{ metallb_secret_creation_result }}"
     when: get_secret_memberlist.stdout_lines | length == 0
 - name: Configure MetalLB default pool
+  tags: configure
   hosts: initkubmaster
   become: true
+  gather_facts: false
   tasks:
   - name: Include vars from vars.yaml
     include_vars:

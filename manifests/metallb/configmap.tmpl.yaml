@@ -5,8 +5,4 @@ metadata:
   name: config
 data:
   config: |
-    address-pools:
-    - name: default
-      protocol: layer2
-      addresses:
-      - {{ metallb.default_ip_pool_addresses }}
+    {{ metallb.config | to_nice_yaml | indent(4) }}

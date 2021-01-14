@@ -12,7 +12,17 @@ public_dns:
 kubectl_user: ktogias
 pod_network_cidr: 10.100.0.0/16
 metallb:
-  default_ip_pool_addresses: 192.168.0.80-192.168.0.89
+  config:
+    address-pools:
+    - name: admin
+      protocol: layer2
+      addresses:
+      - 192.168.0.80/32
+      auto-assign: false
+    - name: default
+      protocol: layer2
+      addresses:
+      - 192.168.0.90-192.168.0.99
 # See https://docs.projectcalico.org/reference/felix/configuration for calico config
 #calico:
 #  felix:
@@ -78,12 +88,12 @@ istio:
         - name: istio-ingressgateway
           k8s:
             service:
-              loadBalancerIP: 192.168.0.80
+              loadBalancerIP: 192.168.0.90
         - name: istio-admin-ingressgateway
           enabled: true
           k8s:
             service:
-              loadBalancerIP: 192.168.0.81
+              loadBalancerIP: 192.168.0.80
               ports:
               - name: http2
                 port: 80
