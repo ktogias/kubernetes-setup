@@ -8,9 +8,9 @@
   - name: Include vars from vars.yaml
     include_vars:
       file: vars.yaml
-  - name: Template recommended manifest
-    template:
-      src: ../manifests/kubernetes-dashboard/recommended.tmpl.yaml
+  - name: Copy recommended manifest
+    copy:
+      src: ../manifests/kubernetes-dashboard/recommended.yaml
       dest: "/tmp/kubernetes-dashboard-recommended.yaml"
   - name: Ensure recommended manifest is applied
     become: true
