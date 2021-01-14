@@ -8,7 +8,7 @@ spec:
     istio: {{kubernetes.dashboard.istioHttpsIngress.istioGatewaySelector}}
   servers:
   - port:
-      number: 443
+      number: {{kubernetes.dashboard.istioHttpsIngress.port | default(443) | int}}
       name: https
       protocol: HTTPS
     tls:
@@ -29,7 +29,7 @@ spec:
   - kubernetes-dashboard
   tls:
   - match:
-    - port: 443
+    - port: {{kubernetes.dashboard.istioHttpsIngress.port | default(443) | int}}
       sniHosts:
       {{kubernetes.dashboard.istioHttpsIngress.dns | to_nice_yaml | indent(2)}}
     route:

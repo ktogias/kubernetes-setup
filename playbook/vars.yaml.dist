@@ -112,7 +112,5 @@ kubernetes:
       enabled: true
       istioGatewaySelector: admin-ingressgateway
       port: 443
-      certificateIssuer: selfsigned
       dns:
       - "kub.proastio.patra"
-      uriPrefix: /
