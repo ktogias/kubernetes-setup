@@ -43,6 +43,9 @@
     template:
       src: ../helm-values/kube-prometheus-stack/values.tmpl.yaml
       dest: "/tmp/kube-prometheus-stack-helm-values.yaml"
+  - name: Create namespace
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl create ns {{kub_prometheus_stack.namespace | default("kube-prometheus")}}"
   - name: Ensure chart is installed
     become_user: "{{ kubectl_user }}"
     command: /usr/local/bin/helm install -f /tmp/kube-prometheus-stack-helm-values.yaml kube-prometheus-stack prometheus-community/kube-prometheus-stack

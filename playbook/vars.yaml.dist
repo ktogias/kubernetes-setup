@@ -115,6 +115,7 @@ kubernetes:
       - "kub.proastio.patra"
 
 kub_prometheus_stack:
+  namespace: kube-prometheus
   alertmanager:
     storage:
       storageClassName: rook-ceph-block
@@ -123,3 +124,7 @@ kub_prometheus_stack:
     storage:
       storageClassName: rook-ceph-block
       requestSize: 20Gi
+  graphana:
+    storage:
+      storageClassName: rook-ceph-block
+      requestSize: 2Gi
