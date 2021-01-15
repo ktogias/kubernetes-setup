@@ -1,0 +1,47 @@
+---
+- name: Chek if helm is already installed
+  tags:
+  - check
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Try to get helm version
+    command: helm version
+    register: helm_version_result
+    ignore_errors: yes
+  - name: Show helm version result
+    debug:
+      var: helm_version_result
+  - name: Set HELM_IS_INSTALLED fact
+    set_fact: 
+      HELM_IS_INSTALLED: "{{not helm_version_result.failed}}"
+
+- name: Install helm3
+  tags:
+  - install
+  hosts: initkubmaster
+  become: true
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Is helm already installed?
+    debug:
+      msg: "{{HELM_IS_INSTALLED}}"
+  - name: Download install script
+    get_url: 
+      url: https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+      dest: /tmp/get_helm.sh
+      mode: '700'
+    when: HELM_IS_INSTALLED | default(false)| bool is false
+  - name: Execute install script
+    command: /tmp/get_helm.sh
+    register: install_script_result
+    when: HELM_IS_INSTALLED | default(false)| bool is false
+  - name: Show install script result
+    debug:
+      var: install_script_result
+    when: HELM_IS_INSTALLED | default(false)| bool is false
