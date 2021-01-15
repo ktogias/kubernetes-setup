@@ -11,6 +11,8 @@ public_dns:
   - 192.168.0.1
 kubectl_user: ktogias
 pod_network_cidr: 10.100.0.0/16
+kubelet:
+  extra_args: --authentication-token-webhook=true --authorization-mode=Webhook
 metallb:
   config:
     address-pools:
@@ -36,9 +38,6 @@ metallb:
 #    failure_threshold: 12
 #  readiness_probe:
 #    period_seconds: 30
-#kubelet:
-#  extra_args:
-#    cpu_cfs_quota: "false"
 rook_ceph:
   cluster:
     network:
