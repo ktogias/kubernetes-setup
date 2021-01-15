@@ -30,7 +30,7 @@
       file: vars.yaml
   - name: Is helm already installed?
     debug:
-      msg: "{{HELM_IS_INSTALLED}}"
+      msg: "{{HELM_IS_INSTALLED | default(false)}}"
   - name: Download install script
     get_url: 
       url: https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3

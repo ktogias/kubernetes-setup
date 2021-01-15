@@ -113,3 +113,13 @@ kubernetes:
       port: 443
       dns:
       - "kub.proastio.patra"
+
+kub_prometheus_stack:
+  alertmanager:
+    storage:
+      storageClassName: blockpool
+      requestSize: 20Gi
+  prometheus:
+    storage:
+      storageClassName: blockpool
+      requestSize: 20Gi

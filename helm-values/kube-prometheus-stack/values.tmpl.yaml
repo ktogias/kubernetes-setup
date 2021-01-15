@@ -1,0 +1,55 @@
+## Configuration for alertmanager
+## ref: https://prometheus.io/docs/alerting/alertmanager/
+##
+alertmanager:
+
+  ## Settings affecting alertmanagerSpec
+  ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#alertmanagerspec
+  ##
+  alertmanagerSpec:
+    
+    ## Storage is the definition of how storage will be used by the Alertmanager instances.
+    ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/user-guides/storage.md
+    ##
+    storage: 
+      volumeClaimTemplate:
+        spec:
+          storageClassName: {{kub_prometheus_stack.alertmanager.storage.storageClassName | default("gluster")}}
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: {{kub_prometheus_stack.alertmanager.storage.requestSize | default("50Gi")}}
+    # volumeClaimTemplate:
+    #   spec:
+    #     storageClassName: gluster
+    #     accessModes: ["ReadWriteOnce"]
+    #     resources:
+    #       requests:
+    #         storage: 50Gi
+    #   selector: {}
+
+## Deploy a Prometheus instance
+##
+prometheus:
+
+    ## Prometheus StorageSpec for persistent data
+    ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/user-guides/storage.md
+    ##
+    storageSpec: 
+      volumeClaimTemplate:
+        spec:
+          storageClassName: {{kub_prometheus_stack.prometheus.storage.storageClassName | default("gluster")}}
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: {{kub_prometheus_stack.prometheus.storage.requestSize | default("50Gi")}}
+    ## Using PersistentVolumeClaim
+    ##
+    #  volumeClaimTemplate:
+    #    spec:
+    #      storageClassName: gluster
+    #      accessModes: ["ReadWriteOnce"]
+    #      resources:
+    #        requests:
+    #          storage: 50Gi
+    #    selector: {}
