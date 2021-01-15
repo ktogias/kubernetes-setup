@@ -45,7 +45,7 @@
       dest: "/tmp/kube-prometheus-stack-helm-values.yaml"
   - name: Create namespace
     become_user: "{{ kubectl_user }}"
-    command: "kubectl create ns {{kub_prometheus_stack.namespace | default("kube-prometheus")}}"
+    command: "kubectl create ns {{kube_prometheus_stack.namespace | default('kube-prometheus')}}"
   - name: Ensure chart is installed
     become_user: "{{ kubectl_user }}"
     command: /usr/local/bin/helm install -f /tmp/kube-prometheus-stack-helm-values.yaml kube-prometheus-stack prometheus-community/kube-prometheus-stack
@@ -53,3 +53,41 @@
   - name: Show helm install result
     debug:
       var: helm_install_result
+
+- name: Configure prometheus istio https ingress
+  tags:
+    - istio-https-ingress 
+    - prometheus-istio-https-ingress
+  hosts: initkubmaster
+  become: true
+  gather_facts: False
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Template ingress manifest
+    template:
+      src: ../manifests/kube-prometheus-stack/prometheus-istio-https-ingress.tmpl.yaml
+      dest: "/tmp/kube-prometheus-stack-prometheus-istio-https-ingress.yaml"
+    when: kube_prometheus_stack.prometheus.istioHttpsIngress.enabled | default(false) | bool
+  - name: Ensure ingress manifest is applied
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: kubectl apply -f /tmp/kube-prometheus-stack-prometheus-istio-https-ingress.yaml
+    register: ingress_manifest_application_result
+    when: kube_prometheus_stack.prometheus.istioHttpsIngress.enabled | default(false) | bool
+  - name: Show ingress manifest application result
+    debug:
+      msg: "{{ ingress_manifest_application_result }}"
+    when: kube_prometheus_stack.prometheus.istioHttpsIngress.enabled | default(false) | bool
+
+  #- name: Get admin password
+  #  become: true
+  #  become_user: "{{ kubectl_user }}"
+  #  shell: kubectl -n kube-prometheus get secret kube-prometheus-prometheus-password -o jsonpath="{['data']['password']}" | base64 --decode && echo
+  #  register: prometheus_pass
+  #  when: kube_prometheus.prometheus.istioHttpsIngress.enabled | default(false) | bool
+  #- name: Show login info
+  #  debug:
+  #    msg: "username: admin , pass (WARNING!: SPECIAL CHARS ARE SHOWN ESCAPED!): {{prometheus_pass.stdout}} " 
+  #  when: kube_prometheus.prometheus.istioHttpsIngress.enabled | default(false) | bool

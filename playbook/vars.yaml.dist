@@ -114,7 +114,7 @@ kubernetes:
       dns:
       - "kub.proastio.patra"
 
-kub_prometheus_stack:
+kube_prometheus_stack:
   namespace: kube-prometheus
   alertmanager:
     storage:

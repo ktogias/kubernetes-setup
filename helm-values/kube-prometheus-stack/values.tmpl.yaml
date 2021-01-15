@@ -1,4 +1,4 @@
-namespaceOverride: {{kub_prometheus_stack.namespace | default("kube-prometheus")}}
+namespaceOverride: {{kube_prometheus_stack.namespace | default("kube-prometheus")}}
 ## Configuration for alertmanager
 ## ref: https://prometheus.io/docs/alerting/alertmanager/
 ##
@@ -15,11 +15,11 @@ alertmanager:
     storage: 
       volumeClaimTemplate:
         spec:
-          storageClassName: {{kub_prometheus_stack.alertmanager.storage.storageClassName | default("gluster")}}
+          storageClassName: {{kube_prometheus_stack.alertmanager.storage.storageClassName | default("gluster")}}
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
-              storage: {{kub_prometheus_stack.alertmanager.storage.requestSize | default("50Gi")}}
+              storage: {{kube_prometheus_stack.alertmanager.storage.requestSize | default("50Gi")}}
     # volumeClaimTemplate:
     #   spec:
     #     storageClassName: gluster
@@ -39,11 +39,11 @@ prometheus:
     storageSpec: 
       volumeClaimTemplate:
         spec:
-          storageClassName: {{kub_prometheus_stack.prometheus.storage.storageClassName | default("gluster")}}
+          storageClassName: {{kube_prometheus_stack.prometheus.storage.storageClassName | default("gluster")}}
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
-              storage: {{kub_prometheus_stack.prometheus.storage.requestSize | default("50Gi")}}
+              storage: {{kube_prometheus_stack.prometheus.storage.requestSize | default("50Gi")}}
     ## Using PersistentVolumeClaim
     ##
     #  volumeClaimTemplate:
@@ -56,17 +56,17 @@ prometheus:
     #    selector: {}
 
 grafana:
-  namespaceOverride: {{kub_prometheus_stack.namespace | default("kube-prometheus")}}
+  namespaceOverride: {{kube_prometheus_stack.namespace | default("kube-prometheus")}}
   persistence:
     enabled: true
     type: pvc
-    storageClassName: {{kub_prometheus_stack.grafana.storage.storageClassName | default("gluster")}}
+    storageClassName: {{kube_prometheus_stack.grafana.storage.storageClassName | default("gluster")}}
     accessModes:
     - ReadWriteOnce
-    size: {{kub_prometheus_stack.grafana.storage.requestSize | default("4Gi")}}
+    size: {{kube_prometheus_stack.grafana.storage.requestSize | default("4Gi")}}
 
 kube-state-metrics:
-  namespaceOverride: {{kub_prometheus_stack.namespace | default("kube-prometheus")}}
+  namespaceOverride: {{kube_prometheus_stack.namespace | default("kube-prometheus")}}
 
 prometheus-node-exporter:
-  namespaceOverride: {{kub_prometheus_stack.namespace | default("kube-prometheus")}}
+  namespaceOverride: {{kube_prometheus_stack.namespace | default("kube-prometheus")}}
