@@ -43,9 +43,16 @@
     template:
       src: ../helm-values/kube-prometheus-stack/values.tmpl.yaml
       dest: "/tmp/kube-prometheus-stack-helm-values.yaml"
+  - name: Register existence of namespace
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: kubectl get namespace {{kube_prometheus_stack.namespace | default('kube-prometheus')}}
+    register: namespace_register
+    ignore_errors: yes
   - name: Create namespace
     become_user: "{{ kubectl_user }}"
     command: "kubectl create ns {{kube_prometheus_stack.namespace | default('kube-prometheus')}}"
+    when: namespace_register.stdout_lines | length == 0
   - name: Ensure chart is installed
     become_user: "{{ kubectl_user }}"
     command: /usr/local/bin/helm install -f /tmp/kube-prometheus-stack-helm-values.yaml kube-prometheus-stack prometheus-community/kube-prometheus-stack
