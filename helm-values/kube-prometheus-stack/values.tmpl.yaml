@@ -60,6 +60,10 @@ prometheus:
     #        requests:
     #          storage: 50Gi
     #    selector: {}
+{%if kube_prometheus_stack.prometheus.resources is defined %}
+    resources: 
+      {{kube_prometheus_stack.prometheus.resources | to_nice_yaml | indent(6)}} 
+{% endif %}
 
 grafana:
   namespaceOverride: {{kube_prometheus_stack.namespace | default("kube-prometheus")}}

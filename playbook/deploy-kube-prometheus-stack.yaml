@@ -55,7 +55,7 @@
     when: namespace_register.stdout_lines | length == 0
   - name: Ensure chart is installed
     become_user: "{{ kubectl_user }}"
-    command: /usr/local/bin/helm install -f /tmp/kube-prometheus-stack-helm-values.yaml kube-prometheus-stack prometheus-community/kube-prometheus-stack
+    command: /usr/local/bin/helm upgrade -i -f /tmp/kube-prometheus-stack-helm-values.yaml kube-prometheus-stack prometheus-community/kube-prometheus-stack
     register: helm_install_result
   - name: Show helm install result
     debug:
