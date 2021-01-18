@@ -209,6 +209,17 @@
     debug:
       msg: "{{ ingress_manifest_application_result }}"
     when: rook_ceph.dashboard.istioHttpsIngress.enabled | default(false) | bool
+
+- name: Show admin password
+  tags:
+  - user-token
+  hosts: initkubmaster
+  become: true
+  gather_facts: False
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
   - name: Get admin password
     become: true
     become_user: "{{ kubectl_user }}"
