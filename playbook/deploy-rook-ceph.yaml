@@ -1,14 +1,7 @@
 ---
-- name: Setup rook submodule
-  hosts: localhost
-  connection: local
-  gather_facts: no
-  tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
-
 - name: Deploy the rook ceph operator and cluster
+  tags:
+  - deploy
   hosts: initkubmaster
   become: true
   gather_facts: no
