@@ -20,7 +20,7 @@
     lineinfile:
       path: "/etc/sysconfig/kubelet"
       regexp: '^KUBELET_EXTRA_ARGS='
-      line: 'KUBELET_EXTRA_ARGS="--node-ip={{ node_ip }}{%if kubelet.extra_args.cpu_cfs_quota is defined%} --cpu-cfs-quota={{kubelet.extra_args.cpu_cfs_quota}}{%endif%}"'
+      line: 'KUBELET_EXTRA_ARGS="--node-ip={{ node_ip }} {{kubelet.extra_args | default()}}"'
       backup: yes
   - name: Ensure kubelet service is restarted
     service:
@@ -113,6 +113,7 @@
 - name: Check kubernetes cluster
   hosts: initkubmaster
   become: true
+  gather_facts: false
   tasks:
   - name: Run kubectl get nodes
     become: true

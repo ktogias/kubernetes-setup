@@ -1,0 +1,54 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{kube_prometheus_stack.namespace | default("kube-prometheus")}}.grafana
+  namespace: istio-system
+spec:
+  dnsNames:
+  {{kube_prometheus_stack.grafana.istioHttpsIngress.dns | to_nice_yaml | indent(2)}}
+  secretName: {{kube_prometheus_stack.namespace | default("kube-prometheus")}}.grafana-certificate
+  issuerRef:
+    name: {{kube_prometheus_stack.grafana.istioHttpsIngress.certificateIssuer}}
+    kind: ClusterIssuer
+  commonName: {{kube_prometheus_stack.grafana.istioHttpsIngress.dns[0]}}
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: grafana
+  namespace: {{kube_prometheus_stack.namespace | default("kube-prometheus")}}
+spec:
+  selector:
+    istio: {{kube_prometheus_stack.grafana.istioHttpsIngress.istioGatewaySelector}}
+  servers:
+  - port:
+      number: {{kube_prometheus_stack.grafana.istioHttpsIngress.port | default(443) | int}}
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: {{kube_prometheus_stack.namespace | default("kube-prometheus")}}.grafana-certificate
+    hosts:
+    {{kube_prometheus_stack.grafana.istioHttpsIngress.dns | to_nice_yaml | indent(4)}}
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: grafana
+  namespace: {{kube_prometheus_stack.namespace | default("kube-prometheus")}}
+spec:
+  hosts:
+  {{kube_prometheus_stack.grafana.istioHttpsIngress.dns | to_nice_yaml | indent(2)}}
+  gateways:
+  - grafana
+  http:
+  - match:
+    - uri:
+        prefix: {{kube_prometheus_stack.grafana.istioHttpsIngress.uriPrefix | default("/")}}
+    route:
+    - destination:
+        port:
+          number: 80
+        host: kube-prometheus-stack-grafana

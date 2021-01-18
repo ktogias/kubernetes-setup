@@ -1,14 +1,7 @@
 ---
-- name: Setup rook submodule
-  hosts: localhost
-  connection: local
-  gather_facts: no
-  tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
-
 - name: Deploy the rook ceph operator and cluster
+  tags:
+  - deploy
   hosts: initkubmaster
   become: true
   gather_facts: no
@@ -209,6 +202,17 @@
     debug:
       msg: "{{ ingress_manifest_application_result }}"
     when: rook_ceph.dashboard.istioHttpsIngress.enabled | default(false) | bool
+
+- name: Show admin password
+  tags:
+  - user-token
+  hosts: initkubmaster
+  become: true
+  gather_facts: False
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
   - name: Get admin password
     become: true
     become_user: "{{ kubectl_user }}"

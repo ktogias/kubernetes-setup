@@ -1,0 +1,156 @@
+---
+- name: Ensure Helm is installed
+  tags: 
+    - prepare
+  import_playbook: install-helm3.yaml
+
+- name: Setup helm repo 
+  tags: 
+    - prepare
+  hosts: initkubmaster
+  become: true
+  gather_facts: False
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Ensure prometheus-community helm repo is added 
+    become_user: "{{ kubectl_user }}"
+    command: /usr/local/bin/helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    register: repo_add_result
+  - name: Show repo add resul
+    debug:
+      var: repo_add_result
+
+- name: Install chart
+  tags: 
+    - install_chart
+  hosts: initkubmaster
+  become: true
+  gather_facts: False
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Ensure prometheus-community helm repo is up to date
+    become_user: "{{ kubectl_user }}"
+    command: /usr/local/bin/helm repo update
+    register: repo_update_result
+  - name: Show repo update result
+    debug:
+      var: repo_update_result
+  - name: Template vars.yaml
+    template:
+      src: ../helm-values/kube-prometheus-stack/values.tmpl.yaml
+      dest: "/tmp/kube-prometheus-stack-helm-values.yaml"
+  - name: Register existence of namespace
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: kubectl get namespace {{kube_prometheus_stack.namespace | default('kube-prometheus')}}
+    register: namespace_register
+    ignore_errors: yes
+  - name: Create namespace
+    become_user: "{{ kubectl_user }}"
+    command: "kubectl create ns {{kube_prometheus_stack.namespace | default('kube-prometheus')}}"
+    when: namespace_register.stdout_lines | length == 0
+  - name: Ensure chart is installed
+    become_user: "{{ kubectl_user }}"
+    command: /usr/local/bin/helm upgrade -i -f /tmp/kube-prometheus-stack-helm-values.yaml kube-prometheus-stack prometheus-community/kube-prometheus-stack
+    register: helm_install_result
+  - name: Show helm install result
+    debug:
+      var: helm_install_result
+
+- name: Configure prometheus istio https ingress
+  tags:
+    - istio-https-ingress 
+    - prometheus-istio-https-ingress
+  hosts: initkubmaster
+  become: true
+  gather_facts: False
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Template ingress manifest
+    template:
+      src: ../manifests/kube-prometheus-stack/prometheus-istio-https-ingress.tmpl.yaml
+      dest: "/tmp/kube-prometheus-stack-prometheus-istio-https-ingress.yaml"
+    when: kube_prometheus_stack.prometheus.istioHttpsIngress.enabled | default(false) | bool
+  - name: Ensure ingress manifest is applied
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: kubectl apply -f /tmp/kube-prometheus-stack-prometheus-istio-https-ingress.yaml
+    register: ingress_manifest_application_result
+    when: kube_prometheus_stack.prometheus.istioHttpsIngress.enabled | default(false) | bool
+  - name: Show ingress manifest application result
+    debug:
+      msg: "{{ ingress_manifest_application_result }}"
+    when: kube_prometheus_stack.prometheus.istioHttpsIngress.enabled | default(false) | bool
+
+- name: Configure grafana istio https ingress
+  tags:
+    - istio-https-ingress 
+    - grafana-istio-https-ingress
+  hosts: initkubmaster
+  become: true
+  gather_facts: False
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Template ingress manifest
+    template:
+      src: ../manifests/kube-prometheus-stack/grafana-istio-https-ingress.tmpl.yaml
+      dest: "/tmp/kube-prometheus-stack-grafana-istio-https-ingress.yaml"
+    when: kube_prometheus_stack.grafana.istioHttpsIngress.enabled | default(false) | bool
+  - name: Ensure ingress manifest is applied
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: kubectl apply -f /tmp/kube-prometheus-stack-grafana-istio-https-ingress.yaml
+    register: ingress_manifest_application_result
+    when: kube_prometheus_stack.grafana.istioHttpsIngress.enabled | default(false) | bool
+  - name: Show ingress manifest application result
+    debug:
+      msg: "{{ ingress_manifest_application_result }}"
+    when: kube_prometheus_stack.grafana.istioHttpsIngress.enabled | default(false) | bool
+
+
+- name: Configure alertmanager istio https ingress
+  tags:
+    - istio-https-ingress 
+    - alertmanager-istio-https-ingress
+  hosts: initkubmaster
+  become: true
+  gather_facts: False
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Template ingress manifest
+    template:
+      src: ../manifests/kube-prometheus-stack/alertmanager-istio-https-ingress.tmpl.yaml
+      dest: "/tmp/kube-prometheus-stack-alertmanager-istio-https-ingress.yaml"
+    when: kube_prometheus_stack.alertmanager.istioHttpsIngress.enabled | default(false) | bool
+  - name: Ensure ingress manifest is applied
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: kubectl apply -f /tmp/kube-prometheus-stack-alertmanager-istio-https-ingress.yaml
+    register: ingress_manifest_application_result
+    when: kube_prometheus_stack.alertmanager.istioHttpsIngress.enabled | default(false) | bool
+  - name: Show ingress manifest application result
+    debug:
+      msg: "{{ ingress_manifest_application_result }}"
+    when: kube_prometheus_stack.alertmanager.istioHttpsIngress.enabled | default(false) | bool
+
+
+  #- name: Get admin password
+  #  become: true
+  #  become_user: "{{ kubectl_user }}"
+  #  shell: kubectl -n kube-prometheus get secret kube-prometheus-prometheus-password -o jsonpath="{['data']['password']}" | base64 --decode && echo
+  #  register: prometheus_pass
+  #  when: kube_prometheus.prometheus.istioHttpsIngress.enabled | default(false) | bool
+  #- name: Show login info
+  #  debug:
+  #    msg: "username: admin , pass (WARNING!: SPECIAL CHARS ARE SHOWN ESCAPED!): {{prometheus_pass.stdout}} " 
+  #  when: kube_prometheus.prometheus.istioHttpsIngress.enabled | default(false) | bool

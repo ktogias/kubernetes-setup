@@ -11,6 +11,8 @@ public_dns:
   - 192.168.0.1
 kubectl_user: ktogias
 pod_network_cidr: 10.100.0.0/16
+kubelet:
+  extra_args: --authentication-token-webhook=true --authorization-mode=Webhook
 metallb:
   config:
     address-pools:
@@ -36,9 +38,6 @@ metallb:
 #    failure_threshold: 12
 #  readiness_probe:
 #    period_seconds: 30
-#kubelet:
-#  extra_args:
-#    cpu_cfs_quota: "false"
 rook_ceph:
   cluster:
     network:
@@ -111,6 +110,52 @@ kubernetes:
     istioHttpsIngress: 
       enabled: true
       istioGatewaySelector: admin-ingressgateway
+      certificateIssuer: selfsigned
       port: 443
       dns:
       - "kub.proastio.patra"
+
+kube_prometheus_stack:
+  namespace: kube-prometheus
+  alertmanager:
+    storage:
+      storageClassName: rook-ceph-block
+      requestSize: 20Gi
+    istioHttpsIngress: 
+      enabled: true
+      istioGatewaySelector: admin-ingressgateway
+      certificateIssuer: selfsigned
+      port: 443
+      dns:
+      - "alertmanager.kub.proastio.patra"
+  prometheus:
+    scrapeInterval: 60s
+    evaluationInterval: 60s
+#    resources:
+#      limits:
+#        cpu: 200m
+#        memory: 200Mi
+#      requests:
+#        cpu: 100m
+#        memory: 100Mi
+    storage:
+      storageClassName: rook-ceph-block
+      requestSize: 20Gi
+    istioHttpsIngress: 
+      enabled: true
+      istioGatewaySelector: admin-ingressgateway
+      certificateIssuer: selfsigned
+      port: 443
+      dns:
+      - "prometheus.kub.proastio.patra"
+  grafana:
+    storage:
+      storageClassName: rook-ceph-block
+      requestSize: 2Gi
+    istioHttpsIngress: 
+      enabled: true
+      istioGatewaySelector: admin-ingressgateway
+      certificateIssuer: selfsigned
+      port: 443
+      dns:
+      - "grafana.kub.proastio.patra"
