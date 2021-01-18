@@ -1,0 +1,54 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{kube_prometheus_stack.namespace | default("kube-prometheus")}}.alertmanager
+  namespace: istio-system
+spec:
+  dnsNames:
+  {{kube_prometheus_stack.alertmanager.istioHttpsIngress.dns | to_nice_yaml | indent(2)}}
+  secretName: {{kube_prometheus_stack.namespace | default("kube-prometheus")}}.alertmanager-certificate
+  issuerRef:
+    name: {{kube_prometheus_stack.alertmanager.istioHttpsIngress.certificateIssuer}}
+    kind: ClusterIssuer
+  commonName: {{kube_prometheus_stack.alertmanager.istioHttpsIngress.dns[0]}}
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: alertmanager
+  namespace: {{kube_prometheus_stack.namespace | default("kube-prometheus")}}
+spec:
+  selector:
+    istio: {{kube_prometheus_stack.alertmanager.istioHttpsIngress.istioGatewaySelector}}
+  servers:
+  - port:
+      number: {{kube_prometheus_stack.alertmanager.istioHttpsIngress.port | default(443) | int}}
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: {{kube_prometheus_stack.namespace | default("kube-prometheus")}}.alertmanager-certificate
+    hosts:
+    {{kube_prometheus_stack.alertmanager.istioHttpsIngress.dns | to_nice_yaml | indent(4)}}
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: alertmanager
+  namespace: {{kube_prometheus_stack.namespace | default("kube-prometheus")}}
+spec:
+  hosts:
+  {{kube_prometheus_stack.alertmanager.istioHttpsIngress.dns | to_nice_yaml | indent(2)}}
+  gateways:
+  - alertmanager
+  http:
+  - match:
+    - uri:
+        prefix: {{kube_prometheus_stack.alertmanager.istioHttpsIngress.uriPrefix | default("/")}}
+    route:
+    - destination:
+        port:
+          number: 9093
+        host: kube-prometheus-stack-alertmanager

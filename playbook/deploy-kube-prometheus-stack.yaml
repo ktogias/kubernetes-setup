@@ -88,6 +88,62 @@
       msg: "{{ ingress_manifest_application_result }}"
     when: kube_prometheus_stack.prometheus.istioHttpsIngress.enabled | default(false) | bool
 
+- name: Configure grafana istio https ingress
+  tags:
+    - istio-https-ingress 
+    - grafana-istio-https-ingress
+  hosts: initkubmaster
+  become: true
+  gather_facts: False
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Template ingress manifest
+    template:
+      src: ../manifests/kube-prometheus-stack/grafana-istio-https-ingress.tmpl.yaml
+      dest: "/tmp/kube-prometheus-stack-grafana-istio-https-ingress.yaml"
+    when: kube_prometheus_stack.grafana.istioHttpsIngress.enabled | default(false) | bool
+  - name: Ensure ingress manifest is applied
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: kubectl apply -f /tmp/kube-prometheus-stack-grafana-istio-https-ingress.yaml
+    register: ingress_manifest_application_result
+    when: kube_prometheus_stack.grafana.istioHttpsIngress.enabled | default(false) | bool
+  - name: Show ingress manifest application result
+    debug:
+      msg: "{{ ingress_manifest_application_result }}"
+    when: kube_prometheus_stack.grafana.istioHttpsIngress.enabled | default(false) | bool
+
+
+- name: Configure alertmanager istio https ingress
+  tags:
+    - istio-https-ingress 
+    - alertmanager-istio-https-ingress
+  hosts: initkubmaster
+  become: true
+  gather_facts: False
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Template ingress manifest
+    template:
+      src: ../manifests/kube-prometheus-stack/alertmanager-istio-https-ingress.tmpl.yaml
+      dest: "/tmp/kube-prometheus-stack-alertmanager-istio-https-ingress.yaml"
+    when: kube_prometheus_stack.alertmanager.istioHttpsIngress.enabled | default(false) | bool
+  - name: Ensure ingress manifest is applied
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: kubectl apply -f /tmp/kube-prometheus-stack-alertmanager-istio-https-ingress.yaml
+    register: ingress_manifest_application_result
+    when: kube_prometheus_stack.alertmanager.istioHttpsIngress.enabled | default(false) | bool
+  - name: Show ingress manifest application result
+    debug:
+      msg: "{{ ingress_manifest_application_result }}"
+    when: kube_prometheus_stack.alertmanager.istioHttpsIngress.enabled | default(false) | bool
+
+
   #- name: Get admin password
   #  become: true
   #  become_user: "{{ kubectl_user }}"
