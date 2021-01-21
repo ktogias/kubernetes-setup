@@ -14,3 +14,17 @@ https://upcloud.com/community/tutorials/install-kubernetes-cluster-centos-8/?utm
 ## Minio run
 
 podman run -d --name minio -p 9000:9000 -v /minio:/data minio server /data
+
+
+/etc/systemd/minio-container.service:
+
+[Unit]
+Description=Minio container
+
+[Service]
+Restart=always
+ExecStart=/usr/bin/podman start -a minio
+ExecStop=/usr/bin/podman stop -t 2 minio
+
+[Install]
+WantedBy=local.target
