@@ -13,7 +13,7 @@ https://upcloud.com/community/tutorials/install-kubernetes-cluster-centos-8/?utm
 
 ## Minio run
 
-podman run -d --name minio -p 9000:9000 -v /minio:/data minio server /data
+podman run -d --name minio --env-file=/etc/minio.cfg -p 9000:9000 -v /minio:/data minio server /data
 
 
 /etc/systemd/system/minio-container.service:
