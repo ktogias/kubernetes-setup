@@ -27,4 +27,4 @@ ExecStart=/usr/bin/podman start -a minio
 ExecStop=/usr/bin/podman stop -t 2 minio
 
 [Install]
-WantedBy=local.target
+WantedBy=multi-user.target
