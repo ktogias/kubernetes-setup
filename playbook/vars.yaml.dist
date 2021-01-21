@@ -159,3 +159,19 @@ kube_prometheus_stack:
       port: 443
       dns:
       - "grafana.kub.proastio.patra"
+
+velero:
+  cli:
+    version: v1.5.3
+    arch: amd64
+  namespace: velero
+  provider: 
+    type: minio
+    url: http://myhost:9000
+    username: <>
+    password: <>
+    plugin:
+      version: v1.1.0
+  bucket: vkub
+  deployRestic: true
+  defaultVolumesToRestic: true
