@@ -20,6 +20,8 @@ podman run -d --name minio -p 9000:9000 -v /minio:/data minio server /data
 
 [Unit]
 Description=Minio container
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Restart=always
