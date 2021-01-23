@@ -30,3 +30,34 @@ ExecStop=/usr/bin/podman stop -t 2 minio
 
 [Install]
 WantedBy=multi-user.target
+
+
+Minio config with mc:
+
+https://docs.min.io/docs/minio-client-quickstart-guide.html
+https://docs.min.io/docs/minio-multi-user-quickstart-guide.html
+cat > fullaccess.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": ["s3:ListBucket"],
+      "Effect": "Allow",
+      "Resource": ["arn:aws:s3:::vkub"]
+    },
+    {
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject"
+      ],
+      "Effect": "Allow",
+      "Resource": ["arn:aws:s3:::vkub/*"]
+    }
+  ]
+}
+EOF
+
+mc admin policy add <host> vkub_fullaccess fullaccess.json
+mc admin user add <host> <user> <pass>
+
+
