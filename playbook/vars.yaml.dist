@@ -167,9 +167,9 @@ velero:
   namespace: velero
   provider: 
     type: minio
-    url: http://150.140.12.119:9000
-    username: minioadmin
-    password: vouch3rMINIO
+    url: http://myhost:9000
+    username: <>
+    password: <>
     plugin:
       version: v1.1.0
   bucket: vkub
