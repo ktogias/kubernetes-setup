@@ -1,0 +1,64 @@
+---
+- name: Uninstall velero using helm
+  tags: 
+  - uninstall
+  hosts: initkubmaster
+  become: true
+  gather_facts: False
+  tasks:
+  - name: Include vars from vars.yaml
+    include_vars:
+      file: vars.yaml
+  - name: Register release existence
+    become_user: "{{ kubectl_user }}"
+    command: /usr/local/bin/helm status velero --namespace {{velero.namespace | default('velero')}}
+    register: helm_status_result
+    ignore_errors: yes
+  - name: Show helm status result
+    debug:
+      var: helm_status_result
+  - name: Ensure helm chart is uninstalled
+    become_user: "{{ kubectl_user }}"
+    command: /usr/local/bin/helm uninstall velero --namespace {{velero.namespace | default('velero')}}
+    register: helm_uninstall_result
+    when: helm_status_result.failed is not true
+  - name: Show helm uninstall result
+    debug:
+      var: helm_uninstall_result
+    when: helm_status_result.failed is not true
+  - name: Register existence of velero namespace
+    become: true
+    become_user: "{{ kubectl_user }}"
+    command: kubectl get namespace {{velero.namespace | default('velero')}}
+    register: velero_namespace_register
+    ignore_errors: yes
+  - name: Ensure namespace is deleted
+    become_user: "{{ kubectl_user }}"
+    command: kubectl delete namespace {{velero.namespace | default('velero')}}
+    register: delete_namespace_result
+    when: velero_namespace_register.failed is not true
+  - name: Show delete namespace result
+    debug:
+      var: delete_namespace_result
+    when: velero_namespace_register.failed is not true
+  - name: Register velero crds
+    become_user: "{{ kubectl_user }}"
+    command: kubectl get crd -o name --selector=app.kubernetes.io/name=velero
+    register: crds
+  - name: Register velero crds
+    become_user: "{{ kubectl_user }}"
+    command: kubectl get crd -o name --selector=app.kubernetes.io/name=velero
+    register: crds
+  - name: Show register velero crds result
+    debug:
+      var: crds
+  - name: Delete velero crds
+    become_user: "{{ kubectl_user }}"
+    command: kubectl delete {{item}}
+    loop: "{{crds.stdout_lines}}"
+    register: delete_crd_results
+  - name: Show delete velero crds result
+    debug:
+      var: delete_crd_results
+    
+    
