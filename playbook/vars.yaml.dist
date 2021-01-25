@@ -175,3 +175,5 @@ velero:
   bucket: vkub
   deployRestic: true
   defaultVolumesToRestic: true
+  restic:
+    repositoryPassword: <>

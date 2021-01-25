@@ -106,4 +106,14 @@
   - name: Show helm install result
     debug:
       var: helm_install_result
-
+  - name: Register existence of restic repositories
+    become_user: "{{ kubectl_user }}"
+    command: kubectl -n velero get resticrepositories.velero.io -o name
+    register: get_resticrepositories_result
+  - name: Show Register existence of restic repositories result
+    debug:
+      var: get_resticrepositories_result.stdout_lines
+  - name: Set Restic RepositoryPassword
+    become_user: "{{ kubectl_user }}"
+    shell: "kubectl -n {{velero.namespace | default('velero')}} create secret generic velero-restic-credentials --from-literal=repository-password={{velero.restic.repositoryPassword}} --dry-run -o yaml | kubectl apply -f - "
+    when: velero.restic.repositoryPassword is defined and get_resticrepositories_result.stdout_lines | length == 0
