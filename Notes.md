@@ -61,3 +61,42 @@ mc admin policy add <host> vkub_fullaccess fullaccess.json
 mc admin user add <host> <user> <pass>
 
 
+Gitlab options:
+
+global.hosts.domain
+
+gitlab.kub.voucher.gov.gr
+registry.kub.voucher.gov.gr
+minio.kub.voucher.gov.gr
+pages.kub.voucher.gov.gr
+
+global.hosts.externalIP
+
+postgresql.install
+
+global.smtp
+global.email
+global.smtp.authentication
+global.smtp.password.secret
+
+global.operator.enabled
+
+certmanager.install
+global.ingress.configureCertmanager
+#global.ingress.annotations."kubernetes\.io/tls-acme"
+global.ingress.tls.enabled
+gitlab.webservice.ingress.tls.secretName
+registry.ingress.tls.secretName
+minio.ingress.tls.secretName
+global.pagesenabled
+global.gitlab-pages.ingress.tls.secretName
+
+gitlab runner priviledged
+
+global.kas.enabled
+
+global.ingress.annotations."nginx.ingress.kuberentes.io/ssl-redirect": false
+
+nginx-ingress.enabled: false
+
+certmanager.install = false
