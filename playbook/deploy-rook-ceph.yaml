@@ -104,11 +104,11 @@
       var: rook_ceph.block_storage
   - name: Template block pool manifest
     template:
-      src: ../manifests/rook-ceph/blockpool.yaml.tmpl
+      src: ../manifests/rook-ceph/blockpool.tmpl.yaml
       dest: /tmp/rook-ceph-blockpool.yaml
   - name: Template block storage class manifest
     template:
-      src: ../manifests/rook-ceph/blockstorageclass.yaml.tmpl
+      src: ../manifests/rook-ceph/blockstorageclass.tmpl.yaml
       dest: /tmp/rook-ceph-blockstorageclass.yaml
   - name: Deploy pool and storageclass manifests
     become: true
@@ -131,31 +131,27 @@
       file: vars.yaml
   - debug:
       var: rook_ceph.block_storage
-  - name: Verify block storage pool exists
+  - name: Verify block storage pools exist
     become: true
     become_user: "{{ kubectl_user }}"
-    command: "kubectl get CephBlockPool {{rook_ceph.block_storage.pool.metadata.name | default('blockpool')}} -n rook-ceph -o name"
+    command: "kubectl get CephBlockPool {{item.name}} -n rook-ceph -o name"
     register: block_pool_status
     until: 'block_pool_status.stdout_lines | length == 1'
     retries: 1
     delay: 10
-  - name: Display block storage pool existence verification output
-    debug:
-      var: block_pool_status.stdout_lines
+    loop: "{{rook_ceph.blockStorage.pool}}"
   - name: Verify block storage class exists
     become: true
     become_user: "{{ kubectl_user }}"
-    command: "kubectl get StorageClass {{rook_ceph.block_storage.storage_class.metadata.name | default('rook-ceph-block')}} -o name"
+    command: "kubectl get StorageClass {{item.name}} -o name"
     register: block_storage_class_status
     until: 'block_storage_class_status.stdout_lines | length == 1'
     retries: 1
     delay: 10
-  - name: Display block storage class existence verification output
-    debug:
-      var: block_storage_class_status.stdout_lines
+    loop: "{{rook_ceph.blockStorage.storageClass}}"
   - name: Template test PVC manifest
     template:
-      src: ../manifests/rook-ceph/blockstoragetestpvc.yaml.tmpl
+      src: ../manifests/rook-ceph/blockstoragetestpvc.tmpl.yaml
       dest: /tmp/rook-ceph-blockstoragetestpvc.yaml
   - name: Apply test PVC manifest
     become: true
@@ -168,11 +164,12 @@
   - name: Verify test PVC in the `Bound` state
     become: true
     become_user: "{{ kubectl_user }}"
-    command: "kubectl get pvc rook-ceph-block-test-pv-claim -o jsonpath='{.status.phase}'"
+    command: "kubectl get pvc rook-ceph-block-{{item.name}}-test-pv-claim -o jsonpath='{.status.phase}'"
     register: rook_ceph_block_test_pvc_status_phase
     until: 'rook_ceph_block_test_pvc_status_phase.stdout_lines[0] == "Bound"'
     retries: 5
     delay: 10
+    loop: "{{rook_ceph.blockStorage.storageClass}}"
   - name: Delete test PVC 
     become: true
     become_user: "{{ kubectl_user }}"

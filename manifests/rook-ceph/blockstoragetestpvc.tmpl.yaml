@@ -1,0 +1,17 @@
+{% for storageClass in rook_ceph.blockStorage.storageClass %}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rook-ceph-block-{{storageClass.name}}-test-pv-claim
+  labels:
+    app: test-rook-ceph-block-storage
+spec:
+  storageClassName: {{storageClass.name}}
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{rook_ceph.block_storage.testpvc.resources.requests.storage | default("20Gi")}}
+
+---
+{% endfor %}

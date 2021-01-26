@@ -82,7 +82,7 @@ global.smtp.password.secret
 global.operator.enabled
 
 certmanager.install
-global.ingress.configureCertmanager
+global.ingress.configureCertmanager = false
 #global.ingress.annotations."kubernetes\.io/tls-acme"
 global.ingress.tls.enabled
 gitlab.webservice.ingress.tls.secretName

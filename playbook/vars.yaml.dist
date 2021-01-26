@@ -64,20 +64,17 @@ rook_ceph:
       dns:
       - "rook-ceph.kub.proastio.patra"
       uriPrefix: /
-  block_storage:
+  blockStorage:
     pool:
-      metadata:
-        name: blockpool
-      spec:
-        replicated:
-          size: 3
-        status_check:
-          mirror:
-            disabled: false
-            interval: 60s
-    storage_class:
-      metadata:
-        name: rook-ceph-block
+    - name: rook-ceph-admin
+      replicas: 2
+    - name: rook-ceph-util
+      replicas: 2
+    storageClass:
+    - name: rook-ceph-admin
+      pool: rook-ceph-admin
+    - name: rook-ceph-util
+      pool: rook-ceph-util
     testpvc:
       spec:
         resources:
