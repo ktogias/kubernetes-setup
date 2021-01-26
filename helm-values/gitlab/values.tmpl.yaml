@@ -1,0 +1,62 @@
+global:
+  common:
+    operator:
+      {{gitlab.operator | default("") | to_nice_yaml | indent(6)}} 
+  edition: {{gitlab.edition | default("ee")}}
+  hosts:
+    domain: {{gitlab.domain}}
+  ingress:
+    configureCertmanager: false
+    enabled: false
+  gitlab:
+{% if gitlab.license is defined %}
+    license: 
+      {{gitlab.license | to_nice_yaml | indent(6)}}
+{% endif %}
+
+  initialRootPassword:
+    secret: root-credentials
+    key: password
+  pages:
+    {{gitlab.pages | default("") | to_nice_yaml | indent(4)}}
+
+{% if gitlab.smtp is defined %}    
+  smtp:
+    {{gitlab.smtp | default("") | to_nice_yaml | indent(4)}}
+    password:
+      secret: smtp-credentials
+      key: password
+{% endif %}
+
+  email:
+    {{gitlab.email | default("") | to_nice_yaml | indent(4)}}
+  time_zone: {{gitlab.timezone | default("UTC")}}
+  grafana:
+    enabled: false
+
+gitlab:
+  gitaly:
+    persistence:
+      storageClass: {{gitlab.storageClass}}
+
+postgresql:
+  persistence:
+    storageClass: {{gitlab.storageClass}}
+
+minio:
+  persistence:
+    storageClass: {{gitlab.storageClass}}
+
+redis:
+  master:
+    persistence:
+      storageClass: {{gitlab.storageClass}}
+
+certmanager:
+  install: false
+
+nginx-ingress:
+  enabled: false
+
+prometheus:
+  install: false

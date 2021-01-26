@@ -1,0 +1,54 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{gitlab.namespace | default("gitlab")}}.pages
+  namespace: istio-system
+spec:
+  dnsNames:
+  {{gitlab.pages.istioHttpsIngress.dns | to_nice_yaml | indent(2)}}
+  secretName: {{gitlab.namespace | default("gitlab")}}.pages-certificate
+  issuerRef:
+    name: {{gitlab.pages.istioHttpsIngress.certificateIssuer}}
+    kind: ClusterIssuer
+  commonName: {{gitlab.pages.istioHttpsIngress.dns[0]}}
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: pages
+  namespace: {{gitlab.namespace | default("gitlab")}}
+spec:
+  selector:
+    istio: {{gitlab.pages.istioHttpsIngress.istioGatewaySelector}}
+  servers:
+  - port:
+      number: {{gitlab.pages.istioHttpsIngress.port | default(443) | int}}
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: {{gitlab.namespace | default("gitlab")}}.pages-certificate
+    hosts:
+    {{gitlab.pages.istioHttpsIngress.dns | to_nice_yaml | indent(4)}}
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: pages
+  namespace: {{gitlab.namespace | default("gitlab")}}
+spec:
+  hosts:
+  {{gitlab.pages.istioHttpsIngress.dns | to_nice_yaml | indent(2)}}
+  gateways:
+  - pages
+  http:
+  - match:
+    - uri:
+        prefix: {{gitlab.pages.istioHttpsIngress.uriPrefix | default("/")}}
+    route:
+    - destination:
+        port:
+          number: 8090
+        host: gitlab-gitlab-pages

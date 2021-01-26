@@ -1,0 +1,62 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{gitlab.namespace | default("gitlab")}}.webservice
+  namespace: istio-system
+spec:
+  dnsNames:
+  {{gitlab.webservice.istioHttpsIngress.dns | to_nice_yaml | indent(2)}}
+  secretName: {{gitlab.namespace | default("gitlab")}}.webservice-certificate
+  issuerRef:
+    name: {{gitlab.webservice.istioHttpsIngress.certificateIssuer}}
+    kind: ClusterIssuer
+  commonName: {{gitlab.webservice.istioHttpsIngress.dns[0]}}
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: webservice
+  namespace: {{gitlab.namespace | default("gitlab")}}
+spec:
+  selector:
+    istio: {{gitlab.webservice.istioHttpsIngress.istioGatewaySelector}}
+  servers:
+  - port:
+      number: {{gitlab.webservice.istioHttpsIngress.port | default(443) | int}}
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: {{gitlab.namespace | default("gitlab")}}.webservice-certificate
+    hosts:
+    {{gitlab.webservice.istioHttpsIngress.dns | to_nice_yaml | indent(4)}}
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: webservice
+  namespace: {{gitlab.namespace | default("gitlab")}}
+spec:
+  hosts:
+  {{gitlab.webservice.istioHttpsIngress.dns | to_nice_yaml | indent(2)}}
+  gateways:
+  - webservice
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        port:
+          number: 8181
+        host: gitlab-webservice-default
+  - match:
+    - uri:
+        prefix: /admin/sidekiq
+    route:
+    - destination:
+        port:
+          number: 8080
+        host: gitlab-webservice-default

@@ -90,6 +90,32 @@ istio_operator:
         patches:
           - path: spec.loadBalancerIP
             value: 192.168.0.90
+          - path: spec.ports
+            value: 
+            - name: status-port
+              port: 15021
+              protocol: TCP
+              targetPort: 15021
+            - name: http2
+              port: 80
+              protocol: TCP
+              targetPort: 8080
+            - name: https
+              port: 443
+              protocol: TCP
+              targetPort: 8443
+            - name: tcp-istiod
+              port: 15012
+              protocol: TCP
+              targetPort: 15012
+            - name: tls
+              port: 15443
+              protocol: TCP
+              targetPort: 15443
+            - name: ssh
+              port: 22
+              protocol: TCP
+              targetPort: 2222
   - name: istio-admin-ingressgateway
     enabled: true
     defaultOverlays: true
@@ -174,3 +200,61 @@ velero:
   defaultVolumesToRestic: true
   restic:
     repositoryPassword: <>
+
+gitlab:
+  namespace: gitlab
+  operator:
+    enabled: true
+  domain: <>
+  rootPassword: gee9Exaekaed
+  pages:
+    enabled: true
+    istioHttpsIngress: 
+      enabled: true
+      istioGatewaySelector: ingressgateway
+      certificateIssuer: selfsigned
+      port: 443
+      dns:
+      - "pages.<>"
+  smtp:
+    enabled: true
+    address: mail.sch.gr
+    user_name: "noreply"
+    authentication: "login"
+  smtpPassword: AhPa8Ohxaifu
+  email: 
+    from: "noreply@gitlab.<>"
+    display_name: CTI Voucher GitLab
+  timezone: Europe/Athens
+  storageClass: rook-ceph-util
+  webservice:
+    istioHttpsIngress: 
+      enabled: true
+      istioGatewaySelector: ingressgateway
+      certificateIssuer: selfsigned
+      port: 443
+      dns:
+      - "gitlab.<>"
+  shell:
+    istioSshIngress: 
+      enabled: true
+      istioGatewaySelector: ingressgateway
+      port: 22
+      dns:
+      - "gitlab.<>"
+  registry:
+    istioHttpsIngress: 
+      enabled: true
+      istioGatewaySelector: ingressgateway
+      certificateIssuer: selfsigned
+      port: 443
+      dns:
+      - "registry.<>"
+  minio:
+    istioHttpsIngress: 
+      enabled: true
+      istioGatewaySelector: ingressgateway
+      certificateIssuer: selfsigned
+      port: 443
+      dns:
+      - "minio.<>"

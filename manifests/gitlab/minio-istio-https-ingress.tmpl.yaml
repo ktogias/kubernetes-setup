@@ -1,0 +1,54 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{gitlab.namespace | default("gitlab")}}.minio
+  namespace: istio-system
+spec:
+  dnsNames:
+  {{gitlab.minio.istioHttpsIngress.dns | to_nice_yaml | indent(2)}}
+  secretName: {{gitlab.namespace | default("gitlab")}}.minio-certificate
+  issuerRef:
+    name: {{gitlab.minio.istioHttpsIngress.certificateIssuer}}
+    kind: ClusterIssuer
+  commonName: {{gitlab.minio.istioHttpsIngress.dns[0]}}
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: minio
+  namespace: {{gitlab.namespace | default("gitlab")}}
+spec:
+  selector:
+    istio: {{gitlab.minio.istioHttpsIngress.istioGatewaySelector}}
+  servers:
+  - port:
+      number: {{gitlab.minio.istioHttpsIngress.port | default(443) | int}}
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: {{gitlab.namespace | default("gitlab")}}.minio-certificate
+    hosts:
+    {{gitlab.minio.istioHttpsIngress.dns | to_nice_yaml | indent(4)}}
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: minio
+  namespace: {{gitlab.namespace | default("gitlab")}}
+spec:
+  hosts:
+  {{gitlab.minio.istioHttpsIngress.dns | to_nice_yaml | indent(2)}}
+  gateways:
+  - minio
+  http:
+  - match:
+    - uri:
+        prefix: {{gitlab.minio.istioHttpsIngress.uriPrefix | default("/")}}
+    route:
+    - destination:
+        port:
+          number: 9000
+        host: gitlab-minio-svc

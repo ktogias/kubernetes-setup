@@ -1,0 +1,33 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: shell
+  namespace: {{gitlab.namespace | default("gitlab")}}
+spec:
+  selector:
+    istio: {{gitlab.shell.istioSshIngress.istioGatewaySelector}}
+  servers:
+  - port:
+      number: {{gitlab.shell.istioSshIngress.port | default(22) | int}}
+      name: tcp
+      protocol: tcp
+    hosts:
+    {{gitlab.shell.istioSshIngress.dns | to_nice_yaml | indent(4)}}
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: shell
+  namespace: {{gitlab.namespace | default("gitlab")}}
+spec:
+  hosts:
+  {{gitlab.shell.istioSshIngress.dns | to_nice_yaml | indent(2)}}
+  gateways:
+  - shell
+  tcp:
+  - route:
+    - destination:
+        port:
+          number: 22
+        host: gitlab-gitlab-shell
