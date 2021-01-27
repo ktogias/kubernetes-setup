@@ -46,17 +46,17 @@ spec:
   http:
   - match:
     - uri:
-        prefix: /
-    route:
-    - destination:
-        port:
-          number: 8181
-        host: gitlab-webservice-default
-  - match:
-    - uri:
         prefix: /admin/sidekiq
     route:
     - destination:
         port:
           number: 8080
+        host: gitlab-webservice-default
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        port:
+          number: 8181
         host: gitlab-webservice-default
