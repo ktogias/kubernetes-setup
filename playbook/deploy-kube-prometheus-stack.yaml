@@ -145,12 +145,12 @@
 
 - name: Patch kube-system endpoints
   tags:
-  - config-endpoints
+  - expose-system-metrics
   hosts: initkubmaster
   become: true
-  gather_facts: True
+  gather_facts: false
   vars: 
-    internal_network: "{{hostvars[inventory_hostname]['ansible_'+internal_interface]['ipv4']['network']}}"
+    metrics_bind_address: "0.0.0.0"
   tasks:
   - name: Include vars from vars.yaml
     include_vars:
@@ -159,7 +159,7 @@
       var: internal_network
   - name: Patch kube-proxy configmap
     become_user: "{{ kubectl_user }}"
-    shell: "kubectl -n kube-system get configmap kube-proxy -o yaml | sed 's/metricsBindAddress: \"\"/metricsBindAddress: {{internal_network}}:10249/' | kubectl apply -f -"
+    shell: "kubectl -n kube-system get configmap kube-proxy -o yaml | sed 's/metricsBindAddress: [^\\]*$/metricsBindAddress: {{metrics_bind_address}}:10249/' | kubectl apply -f -"
     register: configmap_patch_result
   - debug:
       var: configmap_patch_result 
