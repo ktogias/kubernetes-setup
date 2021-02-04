@@ -15,6 +15,7 @@ spec:
 {% endif %} 
 {% if gateway.overlays is defined or gateway.defaultOverlays | default(false) | bool %}
       k8s:
+        replicaCount: {{gateway.replicaCount | default(1)}}
         overlays:
 {% if gateway.defaultOverlays | default(false) | bool %}
 {% macro defaultOverlays() %}
