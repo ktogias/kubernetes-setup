@@ -5,9 +5,6 @@
   vars: 
     node_ip: "{{ hostvars[inventory_hostname]['ansible_'+internal_interface]['ipv4']['address'] }}"
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Ensure docker service is enabled and started
     service:
       name: docker
@@ -32,9 +29,6 @@
   hosts: initkubmaster
   become: true
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Create token and join command
     command: kubeadm token create --print-join-command
     register: kubadm_token_create_output
@@ -60,9 +54,6 @@
   vars:
     CLUSTER_JOIN_COMMAND: "{{ hostvars[groups['initkubmaster'][0]]['CLUSTER_JOIN_COMMAND'] | default('') }}"
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Show cluster join command
     debug:
       var: CLUSTER_JOIN_COMMAND

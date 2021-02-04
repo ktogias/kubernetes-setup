@@ -4,9 +4,6 @@
   become: true
   gather_facts: no
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Template istio default configuration profile manifest
     template:
       src: ../manifests/istio/istio-operator-default-configuaration-profile.tmpl.yaml

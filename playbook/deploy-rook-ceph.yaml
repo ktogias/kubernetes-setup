@@ -6,9 +6,6 @@
   become: true
   gather_facts: no
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Copy crds manifest
     copy:
       src: ../manifests/rook-ceph/crds.yaml
@@ -64,9 +61,6 @@
   become: true
   gather_facts: no
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Verify all rook-ceph pods are in the `Ready` state
     become: true
     become_user: "{{ kubectl_user }}"
@@ -97,9 +91,6 @@
   become: true
   gather_facts: no
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - debug:
       var: rook_ceph.block_storage
   - name: Template block pool manifest
@@ -126,9 +117,6 @@
   become: true
   gather_facts: no
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - debug:
       var: rook_ceph.block_storage
   - name: Verify block storage pools exist
@@ -181,9 +169,6 @@
   become: true
   gather_facts: False
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Template ingress manifest
     template:
       src: ../manifests/rook-ceph/dashboard-istio-https-ingress.tmpl.yaml
@@ -207,9 +192,6 @@
   become: true
   gather_facts: False
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Get admin password
     become: true
     become_user: "{{ kubectl_user }}"

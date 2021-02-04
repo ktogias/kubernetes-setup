@@ -3,9 +3,6 @@
   hosts: initkubmaster
   become: true
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Ensure kube proxy strict ARP mode is enabled
     become: true
     become_user: "{{ kubectl_user }}"
@@ -58,9 +55,6 @@
   become: true
   gather_facts: false
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Template configmap manifest
     template:
       src: ../manifests/metallb/configmap.tmpl.yaml

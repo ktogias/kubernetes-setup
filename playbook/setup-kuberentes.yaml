@@ -5,9 +5,6 @@
   hosts: kuball
   become: yes
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Ensure all packages are at latest version
     yum:
       name: '*'

@@ -2,3 +2,6 @@ playbook/vars.yaml
 playbook/vars*.yaml
 playbook/hosts*.ini
 .*.swp
+vars.yaml
+vars*.yaml
+hosts

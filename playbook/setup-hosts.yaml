@@ -29,9 +29,6 @@
   hosts: kuball
   become: true
   tasks:
-  - name: Include vars from vars.yaml 
-    include_vars:
-      file: vars.yaml
   - name: "Ensure timezone is set to {{ timezone }}"
     community.general.timezone:
       name: "{{ timezone }}"
@@ -50,9 +47,6 @@
   hosts: kuball
   become: true
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Ensure host name is set to the inventory hostname
     hostname:
       name: "{{ inventory_hostname }}"
@@ -71,9 +65,6 @@
   hosts: kuball
   become: true
   tasks: 
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Stat network script with wrong internal ifcfg name
     stat:
         path: "/etc/sysconfig/network-scripts/ifcfg-{{ wrong_internal_ifcfg_name }}"

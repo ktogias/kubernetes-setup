@@ -10,9 +10,6 @@
   hosts: initkubmaster
   become: true
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Try to get velero version
     become_user: "{{ kubectl_user }}"
     command: /usr/local/bin/velero version
@@ -31,9 +28,6 @@
   hosts: initkubmaster
   become: true
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Is velero already installed?
     debug:
       msg: "{{VELERO_IS_INSTALLED | default(false)}}"
@@ -67,9 +61,6 @@
   become: true
   gather_facts: False
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Ensure vmware-tanzu helm repo is added 
     become_user: "{{ kubectl_user }}"
     command: /usr/local/bin/helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts
@@ -85,9 +76,6 @@
   become: true
   gather_facts: False
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Ensure vmware-tanzu helm repo is up to date
     become_user: "{{ kubectl_user }}"
     command: /usr/local/bin/helm repo update

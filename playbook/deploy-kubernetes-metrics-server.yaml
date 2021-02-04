@@ -3,9 +3,6 @@
   hosts: initkubmaster
   become: true
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Template components manifest
     template:
       src: ../manifests/kubernetes-metrics-server/components.tmpl.yaml

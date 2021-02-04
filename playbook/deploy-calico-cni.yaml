@@ -5,9 +5,6 @@
   hosts: kuball
   become: true
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Ensure NetworkManager unmanaged devices configuration file has the proper content
     copy:
       content: |
@@ -32,9 +29,6 @@
   hosts: initkubmaster
   become: true
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Template Calico manifest
     template:
       src: ../manifests/calico/calico.tmpl.yaml
@@ -54,9 +48,6 @@
   hosts: initkubmaster
   become: true
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Verify all kube-system pods are in the `Ready` state
     become: true
     become_user: "{{ kubectl_user }}"

@@ -6,9 +6,6 @@
   become: true
   gather_facts: False
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Register release existence
     become_user: "{{ kubectl_user }}"
     command: /usr/local/bin/helm status velero --namespace {{velero.namespace | default('velero')}}

@@ -1,3 +1,4 @@
+{% include '../vars/vars.yaml' %}
 timezone: Europe/Athens
 internal_interface: enp2s0
 internal_ip: 172.16.1.{{ groups['kuball'].index(inventory_hostname)+81 }}/24

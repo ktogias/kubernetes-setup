@@ -13,7 +13,7 @@
 
 ### Install ansible to a pc to manage the cluster nodes
   yum install ansible
-  vim /etc/ansible/hosts
+  vim <your_hosts_file>
   
   Add thew following:
   ```
@@ -28,6 +28,9 @@ ip5
 [kub-masters]
 ip1
 
+[initkubmaster]
+ip1
+
 [kub-workers]
 ip2
 ip3
@@ -36,32 +39,10 @@ ip5
 ....
  ```
         
-### Install python3 on each node as it is requried for ansible
+### Create your vars file
+  cp vars.dist <your_vars_file>
+and edit
 
-Ssh on each node and run
-  dnf install -y python3 && ln -s /usr/bin/python3 /usr/bin/python
-  
-### Update nodes
+### Run playbook
 
-Run
-  ansible kubernetes -a "dnf upgrade --refresh -y " -u root
-  
-### Reboot nodes
-
-Run
-  ansible kubernetes -a "reboot " -u root
-  
-Dont be afraid of ansible error message. It just lost each node after issuing the reboot command.
-
-### Disable selinux
-
-Run 
-  ansible kubernetes -a "setenforce 0 " -u root
-  ansible kubernetes -a "sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux " -u root
-  
-### Enable IP masquerade at the firewall
-
-Run 
-  ansible kubernetes -a "firewall-cmd --add-masquerade --permanent " -u root
-
-
+ansible-playbook -i <your_hosts_file> -e @<your_vars_file> playbook/<playbook>.yaml

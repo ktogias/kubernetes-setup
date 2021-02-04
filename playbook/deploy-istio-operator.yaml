@@ -5,9 +5,6 @@
   hosts: initkubmaster
   become: true
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Check if istioctl is already installed
     stat:
       path: "~{{ kubectl_user }}/.istioctl/bin/istioctl"
@@ -28,9 +25,6 @@
   hosts: initkubmaster
   become: true
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Register existence of istio operator deployment
     become: true
     become_user: "{{ kubectl_user }}"

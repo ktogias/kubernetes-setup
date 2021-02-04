@@ -5,9 +5,6 @@
   become: true
   gather_facts: False
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Copy recommended manifest
     copy:
       src: ../manifests/kubernetes-dashboard/recommended.yaml
@@ -27,9 +24,6 @@
   become: true
   gather_facts: False
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Verify dashboard pods are in the `Ready` state
     become: true
     become_user: "{{ kubectl_user }}"
@@ -48,9 +42,6 @@
   become: true
   gather_facts: False
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Copy user manifest
     copy:
       src: ../manifests/kubernetes-dashboard/user.yaml
@@ -70,9 +61,6 @@
   become: true
   gather_facts: False
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Template ingress manifest
     template:
       src: ../manifests/kubernetes-dashboard/istio-https-ingress.tmpl.yaml
@@ -95,9 +83,6 @@
   become: true
   gather_facts: False
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Describe user secret
     become: true
     become_user: "{{ kubectl_user }}"

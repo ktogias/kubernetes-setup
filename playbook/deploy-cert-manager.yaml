@@ -3,9 +3,6 @@
   hosts: initkubmaster
   become: true
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Deploy cert-manager manifest
     become: true
     become_user: "{{ kubectl_user }}"

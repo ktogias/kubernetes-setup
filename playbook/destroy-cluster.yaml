@@ -9,9 +9,6 @@
       prompt: "CAUTION! This will stop all deployments and make the cluster unusable! Do you really whant to drain and delete all workers (yes/no)?"
       private: no
   tasks:
-  - name: Include vars from vars.yaml
-    include_vars:
-      file: vars.yaml
   - name: Drain workers
     become: true
     become_user: "{{ kubectl_user }}"
