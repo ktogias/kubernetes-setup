@@ -9,7 +9,7 @@
       value: istio-{{ name }}
 {% for overlay in overlays %}
 {% if overlay.kind == "HorizontalPodAutoscaler" and overlay.name == "istio-"+name %}
-    {{overlay.patches | to_nice_yaml | regex_replace('^-\s+','- ') |indent(2)}}
+    {{overlay.patches | to_nice_yaml | regex_replace('(?m)^-\s+','- ') |indent(4)}}
 {% endif %}
 {% endfor %}
 - kind: Deployment
@@ -29,7 +29,7 @@
       value: {{ name }}
 {% for overlay in overlays %}
 {% if overlay.kind == "Deployment" and overlay.name == "istio-"+name %}
-    {{overlay.patches | to_nice_yaml | regex_replace('^-\s+','- ') |indent(2)}}
+    {{overlay.patches | to_nice_yaml | regex_replace('(?m)^-\s+','- ') |indent(4)}}
 {% endif %}
 {% endfor %}
 - kind: Service
@@ -45,6 +45,6 @@
       value: {{ name }}
 {% for overlay in overlays %}
 {% if overlay.kind == "Service" and overlay.name == "istio-"+name %}
-    {{overlay.patches | to_nice_yaml | regex_replace('^-\s+','- ') |indent(2)}}
+    {{overlay.patches | to_yaml | regex_replace('(?m)^-\s+','- ') |indent(4)}}
 {% endif %}
 {% endfor %}
