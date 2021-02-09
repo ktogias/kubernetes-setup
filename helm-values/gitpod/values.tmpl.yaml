@@ -1,0 +1,33 @@
+{% if gitpod.db is defined %}
+db:
+  {{gitpod.db | to_yaml}}
+{% endif %}
+{% if gitpod.messagebus is defined %}
+messagebus:
+  {{gitpod.messagebus | to_yaml}}
+{% endif %}
+{% if gitpod.registry is defined %}
+components:
+  imageBuilder:
+    registryCerts: []
+    registry:
+      {{gitpod.registry | to_yaml}}
+  workspace:
+    pullSecret:
+      secretName: {{gitpod.registry.secretName}}
+docker-registry:
+  enabled: false
+{% endif %}
+minio:
+  persistence:
+    size: 50Gi
+    storageClass: rook-ceph-util
+mysql:
+  persistence:
+    size: 8Gi
+    storageClass: rook-ceph-util
+docker-registry:
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: rook-ceph-util
